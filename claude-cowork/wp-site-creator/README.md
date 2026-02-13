@@ -17,7 +17,6 @@ CD into `claude-cowork` folder and ZIP `wp-site-creator` and upload it to your C
 |---|---|
 | `/create-site` | Main workflow: describe your site, review specs, choose a design, and deploy the theme to a Studio site |
 | `/preview-designs` | Regenerate design options for an existing site specification |
-| `/export-theme` | Package the theme as a ZIP, create a shareable preview link, or copy files to another location |
 
 ## Skills
 
