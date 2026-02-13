@@ -1,0 +1,4 @@
+.claude/
+outputs/
+.opencode/
+.env

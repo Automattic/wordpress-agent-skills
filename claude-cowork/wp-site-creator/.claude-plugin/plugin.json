@@ -1,0 +1,8 @@
+{
+  "name": "create-a-wp-site",
+  "version": "2.0.0",
+  "description": "Create WordPress block themes from simple descriptions and deploy them to a local WordPress Studio site. Generate professional themes through an interactive workflow: describe your site, choose from design options, and preview on a real WordPress installation.",
+  "author": {
+    "name": "Automattic"
+  }
+}
