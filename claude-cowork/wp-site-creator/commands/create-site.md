@@ -21,9 +21,7 @@ User runs `/create-site` with a description of their site, or asks to create/bui
 
 ## Working Folder
 
-Before starting the workflow, ask the user to choose a local folder to use as the working directory for this project. All generated artifacts (design previews, theme files, etc.) will be written here.
-
-If the user has images they want to use in their site (logos, photos, backgrounds, etc.), ask them to place those files in this folder. Since generated artifacts (design preview HTML files, etc.) are written to an `outputs/` subfolder within the working directory, **copy any user-supplied images into the `outputs/` folder** so that relative links work. Reference these images in HTML using **relative paths** (just the filename, e.g., `src="logo.png"`) — no absolute paths. Note: the Cowork preview window does not load local images due to security restrictions. Let the user know they should **open the HTML files directly in Chrome** (or another browser) to see their images rendered in the design previews.
+If the user has selectd a working folder and referenced files and images in it that they want to use in their site (logos, photos, backgrounds, etc.), then since generated artifacts (design preview HTML files, etc.) are written to an `outputs/` subfolder within the working directory, **copy any user-supplied images into the `outputs/` folder** so that relative links work. Reference these images in HTML using **relative paths** (just the filename, e.g., `src="logo.png"`) — no absolute paths. Note: the Cowork preview window does not load local images due to security restrictions. Let the user know they should **open the HTML files directly in Chrome** (or another browser) to see their images rendered in the design previews.
 
 ## Workflow
 
