@@ -22,7 +22,7 @@ As with all things AI, don't believe everything the model tells you.
 
 ### Cowork plugin
 
-1. Install [WordPress Studio](https://developer.wordpress.com/studio/) and enable the CLI
+1. Install [WordPress Studio](https://developer.wordpress.com/studio/) and enable the CLI and add the MCP server to your Claude Desktop (see `studio-mcp/README.md` for details)
 2. CD into `claude-cowork` and ZIP `wp-site-creator` and upload it to your Cowork instance
 3. In Cowork run the `/create-site` command to start or select it from the plugins menu
 
