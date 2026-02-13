@@ -5,7 +5,7 @@ A Cowork plugin that creates WordPress block themes from simple descriptions and
 ## Requirements
 
 - [WordPress Studio](https://developer.wordpress.com/studio/) installed with CLI enabled
-- Studio MCP server is registered automatically when Studio is installed
+- The WordPress Studio MCP server running and configured in your Claude Desktop (see `studio-mcp/README.md` for setup instructions)
 
 ## Installation
 
