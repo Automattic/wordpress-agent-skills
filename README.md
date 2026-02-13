@@ -1,6 +1,6 @@
 # WordPress Agent Skill Prototypes
 
-This repository contains early prototypes of Agent Skills for building WordPress themes and sites. These are currently released as beta software and currently recommended for developers and AI enthusiasts to test and provide feedback on. The code is not production-ready and may contain bugs, security issues, and other problems. Use at your own risk.
+This repository contains early prototypes of Agent Skills for building WordPress themes and sites. These are currently released as beta software and recommended for developers and AI enthusiasts to test and provide feedback on. The code is not production-ready and may contain bugs, security issues, and other problems. Use at your own risk.
 
 As with all things AI, don't believe everything the model tells you.
 
