@@ -45,14 +45,13 @@ Verify it works:
 studio --version
 ```
 
-## Integrate with Claude Desktop or Cursor
+## Integrate with Claude Desktop
 
 No `npm install` or build step required — `dist/index.js` is a pre-built, self-contained bundle.
 
 1. Open the MCP server configuration:
 
    - **Claude Desktop**: **Settings** → **Developer** → **Edit Config**
-   - **Cursor**: **Settings** → **Cursor Settings** → **Tools and MCP** → **New MCP Server**
 
 2. Add the MCP server entry:
 
