@@ -8,7 +8,7 @@
   },
   "plugins": [
     {
-      "name": "wp-site-creator",
+      "name": "create-wp-site",
       "source": "./claude-cowork/wp-site-creator",
       "description": "Create WordPress block themes from simple descriptions and deploy them to a local WordPress Studio site.",
       "version": "2.0.0",
