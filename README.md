@@ -24,7 +24,7 @@ As with all things AI, don't believe everything the model tells you.
 
 1. Install [WordPress Studio](https://developer.wordpress.com/studio/) and enable the CLI and add the MCP server to your Claude Desktop (see [`studio-mcp/README.md`](studio-mcp/README.md#pre-setup) for details)
 2. Install the Cowork plugin:
-    1. Open the plugins menu
+    1. Open the plugins menu in Cowork at bottom of the left sidebar
 
        ![Open the plugins menu](docs/images/plugins-menu.png)
 
