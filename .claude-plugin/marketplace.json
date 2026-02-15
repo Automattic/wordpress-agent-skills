@@ -1,0 +1,22 @@
+{
+  "name": "wordpress-agent-skills",
+  "owner": {
+    "name": "Automattic"
+  },
+  "metadata": {
+    "description": "Agent skills for building WordPress themes and sites with AI"
+  },
+  "plugins": [
+    {
+      "name": "wp-site-creator",
+      "source": "./claude-cowork/wp-site-creator",
+      "description": "Create WordPress block themes from simple descriptions and deploy them to a local WordPress Studio site.",
+      "version": "2.0.0",
+      "author": {
+        "name": "Automattic"
+      },
+      "category": "wordpress",
+      "tags": ["wordpress", "themes", "block-themes", "studio"]
+    }
+  ]
+}
