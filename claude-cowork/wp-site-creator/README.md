@@ -9,7 +9,9 @@ A Cowork plugin that creates WordPress block themes from simple descriptions and
 
 ## Installation
 
-CD into `claude-cowork` folder and ZIP `wp-site-creator` and upload it to your Cowork instance
+Easy install via Cowork: Start a new Cowork task and ask `Please install this cowork plugin https://github.com/Automattic/wordpress-agent-skills`
+
+Manual approach: cd into `claude-cowork` directory in this repository, ZIP `wp-site-creator` and upload it in the plugins section of your Cowork instance (bottom of left panel).
 
 ## Commands
 
