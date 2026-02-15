@@ -23,7 +23,22 @@ As with all things AI, don't believe everything the model tells you.
 ### Cowork plugin
 
 1. Install [WordPress Studio](https://developer.wordpress.com/studio/) and enable the CLI and add the MCP server to your Claude Desktop (see [`studio-mcp/README.md`](studio-mcp/README.md) for details)
-2. Start a new Cowork task and ask `Please install this cowork plugin https://github.com/Automattic/wordpress-agent-skills`
+2. Install the Cowork plugin:
+    1. Open the plugins menu
+
+       ![Open the plugins menu](docs/images/plugins-menu.png)
+
+    2. Add to marketplace from Github
+
+       ![Add to marketplace from Github](docs/images/add-to-marketplace.png)
+
+    3. Add link to https://github.com/Automattic/wordpress-agent-skills
+
+       ![Add link](docs/images/add-link.png)
+
+    4. Install `Create WP Site` plugin
+
+       ![Install Create WP Site plugin](docs/images/install-plugin.png)
 3. In Cowork run the `/create-site` command to start or select it from the plugins menu
 
 The workflow: describe your site, review specs, pick a design direction from 3 previews, then the plugin generates a full WordPress block theme and deploys it to a local Studio site.
