@@ -1,6 +1,6 @@
 # WordPress Agent Skill Prototypes
 
-This repository contains early prototypes of Agent Skills for building WordPress themes and sites. These are currently released as beta software and recommended for developers and AI enthusiasts to test and provide feedback on. The code is not production-ready and may contain bugs, security issues, and other problems. Use at your own risk.
+This repository contains early prototypes of Agent Skills for building WordPress themes/sites and easily sharing them with the world. These are currently released as beta software and recommended for developers and AI enthusiasts to test and provide feedback on. The code is not production-ready and may contain bugs, security issues, and other problems. Use at your own risk.
 
 As with all things AI, don't believe everything the model tells you.
 
@@ -9,7 +9,7 @@ As with all things AI, don't believe everything the model tells you.
 - **Why only a Claude Cowork plugin?**
     The Cowork plugin is just the start. The UI it provides was a convenient way to demonstrate the capabilities of the Agent Skills approach to WordPress site development. Once the basic functionality is proven out and feedback is gathered, the next step will be to port these capabilities into other AI Agents like Claude Code, Codex, OpenCode, etc.
 - **Why the Model Context Protocol (MCP) link to Studio?**
-    The MCP link to Studio provided a quick and easy way of taking an Agents WordPress theme output and deploying it to a local environment for viewing. Claude Cowork has security limitations with copying local files and the MCP approach was an easy workaround. We will be looking at other approaches that do not require a Studio instance and MCP server in the near future.
+    The MCP link to [Studio](https://developer.wordpress.com/studio/) provides a quick and easy way of taking an AI created WordPress theme or site and deploying it to a local environment for viewing. Studio also provides a way to [share your site with others](https://developer.wordpress.com/docs/developer-tools/studio/preview-sites/), and to [sync it to WordPress.com or Pressable](https://developer.wordpress.com/docs/developer-tools/studio/sync/). To make setup easier we will be looking at other approaches that do not require the MCP server in the near future.
 
 ## What's in this repo
 
