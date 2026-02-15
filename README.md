@@ -15,14 +15,14 @@ As with all things AI, don't believe everything the model tells you.
 
 | Directory | What it is |
 |-----------|-----------|
-| `claude-cowork/wp-site-creator/` | Claude Cowork plugin — generates WordPress block themes from a description and deploys them to a local Studio site |
-| `studio-mcp/` | WordPress Studio MCP server — connects Studio to AI tools via the Model Context Protocol |
+| [`claude-cowork/wp-site-creator/`](claude-cowork/wp-site-creator/) | Claude Cowork plugin — generates WordPress block themes from a description and deploys them to a local Studio site |
+| [`studio-mcp/`](studio-mcp/) | WordPress Studio MCP server — connects Studio to AI tools via the Model Context Protocol |
 
 ## Quick start
 
 ### Cowork plugin
 
-1. Install [WordPress Studio](https://developer.wordpress.com/studio/) and enable the CLI and add the MCP server to your Claude Desktop (see `studio-mcp/README.md` for details)
+1. Install [WordPress Studio](https://developer.wordpress.com/studio/) and enable the CLI and add the MCP server to your Claude Desktop (see [`studio-mcp/README.md`](studio-mcp/README.md) for details)
 2. CD into `claude-cowork` and ZIP `wp-site-creator` and upload it to your Cowork instance
 3. In Cowork run the `/create-site` command to start or select it from the plugins menu
 
