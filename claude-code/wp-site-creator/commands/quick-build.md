@@ -76,18 +76,15 @@ Wait for the user's response. They may provide a folder path, individual file pa
 If `$ARGUMENTS` contains a site description:
 1. Use the `site-specification` skill to extract comprehensive site specs
 2. If the user provided images or design documents, analyze them for additional brand/design clues (logos reveal aesthetic, documents may contain explicit brand guidelines)
-3. Present the specs as a readable table for user confirmation
+3. Present the specs as a list for user confirmation. Use exactly this format (one item per line, bold label followed by the value):
 
-| Field | Value |
-|-------|-------|
-| Site Name | [extracted or inferred] |
-| Site Type | [e.g., SaaS, restaurant, portfolio] |
-| Primary Goal | [conversion goal] |
-| Target Audience | [who the site serves] |
-| Tone | [voice and feel] |
-| Brand Keywords | [aesthetic descriptors] |
-| Key Sections | [recommended layout elements] |
-| Typography | [font pairing] |
+**Site Name:** [extracted or inferred]
+**Site Type:** [e.g., SaaS, restaurant, portfolio]
+**Primary Goal:** [conversion goal]
+**Target Audience:** [who the site serves]
+**Tone:** [voice and feel]
+**Brand Keywords:** [aesthetic descriptors]
+**Key Sections:** [recommended layout elements]
 
 Ask: "Does this capture your vision? Let me know if you'd like to adjust anything before we proceed to design options."
 
@@ -195,17 +192,17 @@ Read these two files before generating anything:
 ├── functions.php
 ├── templates/
 │   ├── index.html
+│   ├── page.html
 ├── parts/
 │   ├── header.html
 │   ├── footer.html
-│   └── page-title.html
 ```
 
 **Theme generation rules:**
 - Generate `header.html` by extracting the header design from the chosen design preview. Match colors, typography, and layout exactly.
 - Generate `footer.html` suitable for the site type, matching the chosen design approach.
 - The `index.html` template IS the homepage — build it as a full landing page.
-- Generate `page-title.html` that reflects the design of the homepage for inner page consistency.
+- Generate `page.html` as the template for individual pages. It must include the header and footer template parts and a styled title section at the top that is visually coherent with the landing page hero (matching colors, typography, spacing). Use `<!-- wp:post-title /-->` inside this title section so the page title is dynamic. Below the title section, include `<!-- wp:post-content /-->` to render the page body.
 - Always use the header and footer template parts in `index.html`.
 - Faithfully reproduce the header and hero from the chosen design preview, then **build a complete landing page** — the design preview is a **design sample**, not a finished page.
 - ABSOLUTELY NO STOCK IMAGE URLS: No `<img>` tags, core/image blocks, or background-image CSS should contain remembered stock image URLs. Only use images specifically provided by the user. See the block theming reference Image Handling section for techniques to create visual richness without images.
@@ -258,7 +255,7 @@ Use the site spec to choose the best section mix — the table is a guide, not a
 3. functions.php
 4. parts/header.html
 5. parts/footer.html
-6. parts/page-title.html
+6. templates/page.html
 7. templates/index.html
 
 Do not write reports, documentation, or README files.
