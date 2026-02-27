@@ -60,7 +60,7 @@ No `npm install` or build step required — `dist/index.js` is a pre-built, self
 	"mcpServers": {
 		"wordpress-studio-mcp-server": {
 			"command": "node",
-			"args": [ "/ABSOLUTE/PATH/TO/wordpress-studio-mcp-server/dist/index.js" ]
+			"args": [ "/ABSOLUTE/PATH/TO/wordpress-agent-skills/studio-mcp/dist/index.js" ]
 		}
 	}
 }
