@@ -111,9 +111,9 @@ Written by the orchestrator during gallery scaffolding. Updated as phases progre
 { "file": "v1-tile1.html", "version": 1, "label": "Tile 1: Mood Name", "colors": ["#hex1", "#hex2"] }
 ```
 
-- `file` — filename within the phase subdirectory (e.g., `styles/v1-tile1.html`)
+- `file` — filename only, without the phase directory prefix (e.g., `v1-tile1.html`). The gallery PHP prepends the phase directory automatically.
 - `version` — integer version number
-- `label` — human-readable label shown in the sidebar
+- `label` — **required** — short, descriptive mood/theme name shown in the sidebar (e.g., "Butcher Block", "Smoke House", "Street Cart"). Never leave blank or use generic names like "v1" or "Tile 1". For style tiles use the mood/aesthetic name; for page layouts use the layout approach name.
 - `colors` — array of hex colors for the color dots in the sidebar
 
 ### Tokens Object (when set)

@@ -185,12 +185,12 @@ After direction approval, execute IN PARALLEL:
 
 ### After Subagents Complete
 
-1. Update `gallery.json` — add all 3 tiles to `artifacts.styles`
+1. Update `gallery.json` — add all 3 tiles to `artifacts.styles`. Each entry MUST include a descriptive `label` that is the mood/aesthetic name (e.g., "Butcher Block", "Smoke House", "Prairie Modern") — never a generic name like "v1" or "Tile 1".
 2. Say: "Style tiles ready — 3 directions in the gallery. Which one feels right?"
 
 ### Iteration
 
-Spawn new subagents for `v[next]-tile[1|2|3].html`. Always increment version. Update `gallery.json`.
+Spawn new subagents for `v[next]-tile[1|2|3].html`. Always increment version. Update `gallery.json` (always include a descriptive mood-name `label`).
 
 ### Locking: Design Tokens
 
@@ -231,12 +231,12 @@ Replace every `<placeholder>` with actual values collected above.
 
 ### After Agent Completes
 
-1. Update `gallery.json` — add all 3 layouts to `artifacts.pages`
+1. Update `gallery.json` — add all 3 layouts to `artifacts.pages`. Each entry MUST include a descriptive `label` that names the layout approach (e.g., "Magazine Grid", "Bold Hero", "Minimal Scroll") — never a generic name like "v1" or "Layout 1".
 2. Say: "Page layouts ready — 3 options in the gallery. Which direction works?"
 
 ### Iteration
 
-Spawn a new Task agent for revisions: `v[next]-layout[1|2|3].html`. Update `gallery.json`. Token changes: update `design-tokens.json`, call out the change.
+Spawn a new Task agent for revisions: `v[next]-layout[1|2|3].html`. Update `gallery.json` (always include a descriptive layout-approach `label`). Token changes: update `design-tokens.json`, call out the change.
 
 **Output:** Selected layout direction.
 
