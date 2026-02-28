@@ -320,7 +320,7 @@ function selectArtifact(phase, file) {
   var phaseObj = PHASES.filter(function(p) { return p.key === phase; })[0];
   var phaseLabel = phaseObj ? phaseObj.label : phase;
   document.getElementById('mainTitle').textContent = phaseLabel + ' — ' + label;
-  document.getElementById('viewer').innerHTML = '<iframe src="?design-asset=' + encodeURIComponent(phase + '/' + file) + '"></iframe>';
+  document.getElementById('viewer').innerHTML = '<iframe src="?design-asset=' + encodeURIComponent(file) + '"></iframe>';
 }
 
 function selectPhase(phase) {

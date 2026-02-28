@@ -173,6 +173,48 @@ Users will often say "I like the colors from Tile 2 but the typography from Tile
    - Heavy display heading font + heavy body font (no hierarchy) — suggest a lighter body weight
 3. **Present the merged set** — Show the full merged token object to the user and ask for confirmation before writing to `outputs/design-tokens.json`. Never silently merge.
 
+## Design Patterns Extraction
+
+When the user locks a tile, extract **`design-patterns.html`** alongside `design-tokens.json`. Tokens capture design primitives (colors, fonts, spacing); patterns capture the component-level personality — how cards, heroes, buttons, and embellishments actually look and behave. Without patterns, Phase 3+ agents reinvent these from scratch and the approved tile's personality is lost.
+
+### What to Include
+
+Extract these from the selected tile's HTML and CSS:
+
+| Pattern | What to extract |
+|---------|----------------|
+| **Cards** | Full HTML structure (image area + body with tag/heading/text/button) and CSS (image gradients, foam/texture effects, hover transforms, tag styling) |
+| **Hero** | HTML structure (content + decorative elements) and CSS (background gradients, ambient overlays, grain texture, content constraints, decorative animations) |
+| **Buttons** | Full hover state CSS per variant (transforms, box-shadows, `::after` shimmer overlay, dark-mode adaptations) |
+| **Links** | Decoration thickness, underline offset, hover transitions, dark-mode adaptations |
+| **Embellishments** | HTML structure (e.g. vine with leaf/cone children, bubble extras) and complete CSS (dot patterns, wood grain layers, vine/leaf shapes, bubble float animations) |
+| **Animations** | All `@keyframes` definitions from the tile |
+| **Extra CSS vars** | `--overlay`, `--dot-color`, `--grain-opacity`, `--embellish-opacity` and similar decorative control properties |
+
+### What NOT to Include
+
+These are already captured in `design-tokens.json` — do not duplicate them:
+
+- Palette swatches section (color dots)
+- Typography specimen samples
+- Spacing rhythm visualizer
+- Design notes table
+- Base color/font/spacing CSS custom property declarations
+
+### Output Format
+
+Write a self-contained HTML file to `<site-path>/design/design-patterns.html`:
+
+- A single `<style>` block containing all pattern CSS (component styles, hover states, animations, decorative vars)
+- A `<body>` with labeled sections for each pattern category — use `<section>` elements with heading comments (e.g. `<!-- Cards -->`, `<!-- Hero -->`, `<!-- Embellishments -->`) containing the HTML structures
+- Include the Google Fonts `<link>` tags from the tile so patterns render correctly if opened standalone
+- Estimated size: ~500 lines (vs ~1140 for the full tile)
+
+### Persistence
+
+- **Write** — Save to `<site-path>/design/design-patterns.html` at the same time as `design-tokens.json` when the user locks a direction
+- **Read** — Phase 3 and Phase 4 agents read this file alongside `design-tokens.json` to recreate the approved component patterns
+
 ## Phase 2 Variation Requirements
 
 When generating style tiles:
