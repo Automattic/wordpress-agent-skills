@@ -122,7 +122,10 @@ Store the site path for all subsequent steps.
 - `<site-path>/design/design-2.html`
 - `<site-path>/design/design-3.html`
 
-If the user provided images (now in `<site-path>/design/`), include them in the task prompts so designs can reference them using relative paths (e.g., `src="logo.png"`).
+If the user provided images (now in `<site-path>/design/`):
+1. **Identify the logo**: Look for files with "logo" in the name (e.g., `site_logo.png`, `logo.svg`).
+2. **Pick a hero image**: From the remaining photos, choose the most hero-appropriate image for each design approach.
+3. **Pass both to the task prompts** with explicit filenames so each design direction can reference them using relative paths (e.g., `src="site_logo.png"`, `src="hero-image.png"`).
 
 After the user sees the 3 designs, ask: "Which direction appeals to you? You can pick one (1-3) or describe modifications you'd like."
 
@@ -142,7 +145,7 @@ Collect the following values from the current conversation — these are the **o
 | `site-spec` | The confirmed site specification table from Step 1 |
 | `chosen-design-number` | The number (1-3) the user picked |
 | `user-modifications` | Any tweaks the user requested (or "none") |
-| `user-image-filenames` | List of image files in `<site-path>/design/`, or "none" |
+| `user-image-filenames` | List of image files in `<site-path>/design/`, or "none". Identify which is the logo and briefly describe what each photo shows (e.g., "shop interior", "coffee beans close-up") so the agent can place them in appropriate sections. |
 | `CLAUDE_PLUGIN_ROOT` | The plugin root path (available as env var) |
 
 #### Launch the theme-builder agent
@@ -206,7 +209,11 @@ Read these two files before generating anything:
 - Always use the header and footer template parts in `index.html`.
 - Faithfully reproduce the header and hero from the chosen design preview, then **build a complete landing page** — the design preview is a **design sample**, not a finished page.
 - ABSOLUTELY NO STOCK IMAGE URLS: No `<img>` tags, core/image blocks, or background-image CSS should contain remembered stock image URLs. Only use images specifically provided by the user. See the block theming reference Image Handling section for techniques to create visual richness without images.
-- If a user provides a logo image, include it in the theme in the most appropriate and tasteful way.
+- If a user provides a logo image, include it in the header in the most appropriate and tasteful way.
+
+**Image placement in the landing page (REQUIRED when user provides images):**
+If user-provided images exist, you MUST place at least some of them in the homepage template. Do not just copy them to the assets directory — actually use them. For each image, choose the most contextually appropriate section and use `<!-- wp:image -->` blocks, or apply them as backgrounds to Cover or Group blocks.
+Every image should feel intentionally placed and styled to match the design direction — not just dropped in.
 
 **Do not just copy the header and hero.** Build a complete landing page with 5-6 sections.
 

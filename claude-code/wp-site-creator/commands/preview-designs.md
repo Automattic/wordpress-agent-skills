@@ -45,7 +45,12 @@ Each design preview MUST:
 
 #### Image Handling
 
-Use CSS gradients, color blocks, and placeholder imagery to convey atmosphere. Don't let missing images block design exploration at this stage.
+**If the user provided images**, use them in the design previews:
+- **Logo**: If a logo file exists, include it in the header of every design direction. This is non-negotiable — users expect to see their logo.
+- **Hero image**: Choose the most hero-appropriate photo(s) from the user's images (e.g., a storefront, interior, hero product shot) and incorporate it into the hero section. Different directions can use the same image in different ways (full-bleed background with overlay, framed/inset, partial coverage, etc.), or could use different images if multiple are suitable. The key is to showcase the user's actual visuals in the design options, not just placeholders.
+- Reference user images using relative paths (e.g., `src="site_logo.png"`) since they are co-located in the design directory.
+
+**If no user images were provided**, use CSS gradients, color blocks, and typography to convey atmosphere. Don't let missing images block design exploration.
 
 ### Phase 1: Plan Direction Briefs
 
@@ -165,8 +170,6 @@ direction and write it to <design-dir>/design-[NUMBER].html.
 REQUIREMENTS:
 - SCOPE: Header + hero section ONLY. Do NOT add any other sections beyond these two.
 - ABSOLUTELY NO STOCK IMAGE URLS: <`img> tags, background-image CSS, etc. must only include user provided images
-- If a user provides a logo it is critical to include it in the design previews in the most appropriate and tasteful way possible.
-- If the user has provided images see if one is appropriate to include in the hero, but do not force it — the design can be strong without images by using color, typography, layout, and CSS effects to create visual interest and atmosphere
 - NO EMOJIS anywhere in content
 - Use Google Fonts via <link> tag for the exact fonts specified
 - Implement colors using CSS custom properties
