@@ -41,6 +41,16 @@ Each tile should feel like a **mini homepage hero**, not a swatch card. Go beyon
 - **Not a swatch card** — Colors alone are meaningless without typography and component context.
 - **Not a mood board** — No stock photos, no collages, no vibes-only artifacts. Every element is a real rendered specimen.
 
+### Logo Integration
+
+If a user-supplied logo is provided, each style tile should incorporate it:
+
+- **Placement**: Display the logo in a compact brand bar at the top of each tile — small enough not to dominate, visible enough to judge the pairing with the tile's palette and typography.
+- **Color harmony**: The tile's color palette must account for the logo's dominant colors. Don't clash — complement or contrast intentionally. If the logo is warm-toned, a cool palette can work if the interplay is deliberate, but a palette that fights the logo's colors is a failure.
+- **The logo is secondary**: Style tiles are about design atoms (fonts, colors, spacing, buttons). The logo is there so the user can judge whether the direction works with their brand mark — it's not the focal point of the tile.
+- **Reference path**: Use a dual-path `<img>` tag that works both when opened directly as a file AND when served inside the gallery iframe. The pattern: `<img src="../<logo-filename>" onerror="this.onerror=null;this.src='/?design-asset=<logo-filename>'" alt="...">`. The relative `../` path works for direct file access (tiles are in `styles/`, images in `design/`); the `onerror` fallback loads via the gallery's asset route when the relative path fails inside an iframe. Apply the same dual-path pattern to ALL user-supplied images, not just the logo.
+- **No logo, no problem**: If no logo was provided, skip the brand bar entirely. Don't use placeholder logos or text-only stand-ins.
+
 ### Thematic Embellishments
 
 Each tile gets CSS-only decorative elements that reinforce its mood and the site's personality. These are subtle but alive — they give each card character beyond just "colors + fonts."

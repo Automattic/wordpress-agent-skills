@@ -61,6 +61,21 @@ All design outputs live inside the Studio site at `<site-path>/design/`. Theme f
 - No restart naming (`-r2`) — just keep incrementing.
 - `design-tokens.json` and `design-package.json` live at `<site-path>/design/` root (contracts, not visual artifacts).
 
+## Image Paths in Design Artifacts
+
+User-supplied images (logos, photos) live in `<site-path>/design/` while HTML artifacts live in subdirectories (`styles/`, `pages/`, `approved/`). This creates a path problem: relative paths like `../logo.png` work when files are opened directly in a browser, but break inside the gallery iframe (served via `?design-asset=`).
+
+**Solution — dual-path `<img>` tags:** Use an `onerror` fallback so images resolve in both contexts:
+
+```html
+<img src="../logo.png" onerror="this.onerror=null;this.src='/?design-asset=logo.png'" alt="...">
+```
+
+- **Direct file access**: `../logo.png` resolves correctly (up from `styles/` to `design/`)
+- **Gallery iframe**: The relative path fails, `onerror` fires, loads via the gallery's `?design-asset=` route
+
+Apply this pattern to ALL user-supplied images in style tiles, page layouts, and approved mockups. The `?design-asset=` route serves images with correct MIME types (png, jpg, webp, svg, etc.).
+
 ## gallery.json Schema
 
 Written by the orchestrator during gallery scaffolding. Updated as phases progress. This is the **single source of truth** — the mu-plugin reads it on every request.

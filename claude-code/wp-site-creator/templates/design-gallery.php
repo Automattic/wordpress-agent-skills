@@ -34,7 +34,21 @@ add_action( 'template_redirect', function () {
 
 		$real = realpath( $design_dir . $requested );
 		if ( $real && strpos( $real, realpath( $design_dir ) ) === 0 && is_file( $real ) ) {
-			header( 'Content-Type: text/html; charset=UTF-8' );
+			$ext        = strtolower( pathinfo( $real, PATHINFO_EXTENSION ) );
+			$mime_types = array(
+				'html' => 'text/html; charset=UTF-8',
+				'json' => 'application/json; charset=UTF-8',
+				'png'  => 'image/png',
+				'jpg'  => 'image/jpeg',
+				'jpeg' => 'image/jpeg',
+				'gif'  => 'image/gif',
+				'svg'  => 'image/svg+xml',
+				'webp' => 'image/webp',
+				'ico'  => 'image/x-icon',
+				'css'  => 'text/css; charset=UTF-8',
+				'js'   => 'application/javascript; charset=UTF-8',
+			);
+			header( 'Content-Type: ' . ( isset( $mime_types[ $ext ] ) ? $mime_types[ $ext ] : 'application/octet-stream' ) );
 			readfile( $real );
 		} else {
 			status_header( 404 );

@@ -161,6 +161,21 @@ Then ask: "Anything to adjust?"
 Ask the user to describe their site:
 "Tell me about the site you want to create. Include the name, what it's for, and any style preferences you have."
 
+### Image Collection
+
+After the spec is confirmed and before planning directions, ask:
+
+"If you have any images or design documents that will inform the design — logos, photos, brand guidelines, mood boards, etc. — please share the folder they are located in with me."
+
+Wait for the user's response. They may provide a folder path, individual file paths, or indicate they have none.
+
+If images are provided:
+1. Copy them into the design folder: `cp <source>/* <site-path>/design/` (or individual files)
+2. **Identify the logo**: Look for files with "logo" in the name (e.g., `site_logo.png`, `logo.svg`). Store the filename as `logo-filename` (or empty if none found).
+3. **Catalogue all images**: Store the full list as `user-image-filenames`. Briefly note what each non-logo image appears to show (e.g., "shop interior", "coffee beans close-up") so later phases can place them contextually.
+
+If no images are provided, set `logo-filename` to empty and `user-image-filenames` to "none".
+
 ### Direction Planning
 
 After the user confirms the brief, plan 3 design directions. For each: mood name (2-4 words), color palette concept, font pairing concept (vibe terms, not names), spacing density, motion level, button style, embellishment approach.
@@ -181,7 +196,7 @@ After direction approval, execute IN PARALLEL:
 
 **B. Spawn 3 Tile Subagents** (parallel Task() calls, one per direction):
 
-> **Subagent prompt:** You are generating a style tile. Read `${CLAUDE_PLUGIN_ROOT}/references/design-system-core.md` and `${CLAUDE_PLUGIN_ROOT}/references/design-system-phase2.md`. SITE SPEC: [paste]. DIRECTION: [this tile's mood/color/font/density/motion/button/embellishment brief]. OUTPUT: `<site-path>/design/styles/v[N]-tile[1|2|3].html`. Requirements: real Google Fonts via `<link>`, light+dark mode CSS custom properties, CSS-only embellishments, WCAG AA contrast, no emojis.
+> **Subagent prompt:** You are generating a style tile. Read `${CLAUDE_PLUGIN_ROOT}/references/design-system-core.md` and `${CLAUDE_PLUGIN_ROOT}/references/design-system-phase2.md`. SITE SPEC: [paste]. DIRECTION: [this tile's mood/color/font/density/motion/button/embellishment brief]. LOGO: [if `logo-filename` is set, include: "A user-supplied logo exists at `<site-path>/design/<logo-filename>`. Display it in a compact brand bar at the top of the tile and ensure your color palette complements the logo's colors — don't clash. Use the dual-path image pattern so the logo works both when the file is opened directly AND inside the gallery iframe: `<img src=\"../<logo-filename>\" onerror=\"this.onerror=null;this.src='/?design-asset=<logo-filename>'\" alt=\"...\">`. Apply this same dual-path pattern to ALL user-supplied images." If no logo, omit this section.] OUTPUT: `<site-path>/design/styles/v[N]-tile[1|2|3].html`. Requirements: real Google Fonts via `<link>`, light+dark mode CSS custom properties, CSS-only embellishments, WCAG AA contrast, no emojis.
 
 ### After Subagents Complete
 
@@ -214,6 +229,7 @@ Collect these variables — they are the **only** state required from this point
 | `site-spec` | The confirmed site specification (compact summary) |
 | `CLAUDE_PLUGIN_ROOT` | Plugin root path |
 | `gallery-state` | Current `gallery.json` phase and version counters |
+| `user-image-filenames` | List of image files in `<site-path>/design/`, or "none". Identify which is the logo and briefly describe what each photo shows (e.g., "shop interior", "coffee beans close-up") so the agent can place them in appropriate sections. |
 
 From here forward, all Task agent prompts reference **files on disk** (`design-tokens.json`, approved mockups) rather than pasted conversation context.
 
@@ -227,7 +243,7 @@ Launch a **single Task agent** (`subagent_type: "general-purpose"`) to generate 
 
 Replace every `<placeholder>` with actual values collected above.
 
-> **Task agent prompt:** You are generating 3 page layout options for a website. Read these files first: `<CLAUDE_PLUGIN_ROOT>/references/design-system-core.md` and `<CLAUDE_PLUGIN_ROOT>/references/design-system-phase3.md`, then `<site-path>/design/design-tokens.json` (these tokens are LAW — do not deviate). SITE SPEC: [paste compact summary]. 3 LAYOUT BRIEFS: [for each: hero treatment, section ordering, grid patterns, density]. Write 3 files: `<site-path>/design/pages/v[N]-layout1.html`, `v[N]-layout2.html`, `v[N]-layout3.html`. Requirements: realistic content (no lorem ipsum), full page header-to-footer, responsive, hover states, scroll animations, real Google Fonts, same tokens across all 3, no emojis. Return: for each layout, the file path and a 1-line description of the layout approach.
+> **Task agent prompt:** You are generating 3 page layout options for a website. Read these files first: `<CLAUDE_PLUGIN_ROOT>/references/design-system-core.md` and `<CLAUDE_PLUGIN_ROOT>/references/design-system-phase3.md`, then `<site-path>/design/design-tokens.json` (these tokens are LAW — do not deviate). SITE SPEC: [paste compact summary]. USER IMAGES: [paste `user-image-filenames` — if not "none", include: "These user-supplied images are in `<site-path>/design/`. The logo (`<logo-filename>`) MUST appear in the header. Place other images in contextually appropriate sections (hero, about, gallery, etc.). Use the dual-path image pattern so images work both when opened directly AND inside the gallery iframe: `<img src=\"../<filename>\" onerror=\"this.onerror=null;this.src='/?design-asset=<filename>'\" alt=\"...\">`. Every provided image should feel intentionally placed, not just dropped in. If no images were provided, use CSS gradients and color blocks instead."] 3 LAYOUT BRIEFS: [for each: hero treatment, section ordering, grid patterns, density]. Write 3 files: `<site-path>/design/pages/v[N]-layout1.html`, `v[N]-layout2.html`, `v[N]-layout3.html`. Requirements: realistic content (no lorem ipsum), full page header-to-footer, responsive, hover states, scroll animations, real Google Fonts, same tokens across all 3, no emojis. Return: for each layout, the file path and a 1-line description of the layout approach.
 
 ### After Agent Completes
 
@@ -269,7 +285,7 @@ Launch a **single Task agent** (`subagent_type: "general-purpose"`) to generate 
 
 Replace every `<placeholder>` with actual values.
 
-> **Task agent prompt:** You are generating full-page HTML mockups for a website. Read these files first: `<CLAUDE_PLUGIN_ROOT>/references/design-system-core.md` and `<CLAUDE_PLUGIN_ROOT>/references/design-system-phase3.md`, then `<site-path>/design/design-tokens.json` (these tokens are LAW). SITE SPEC: [paste compact summary]. CHOSEN LAYOUT: [description of selected layout direction from Phase 3]. PAGE BRIEFS: [for each page: title, slug, purpose, key sections]. Write one file per page to `<site-path>/design/approved/[slug].html`. Requirements: complete self-contained HTML, real content (no lorem ipsum), real Google Fonts, hover states, scroll animations, consistent identity across all pages, page-specific content (blog: posts with dates; pricing: plan toggle; etc.), no emojis. Return: for each page, the file path and a 1-line description.
+> **Task agent prompt:** You are generating full-page HTML mockups for a website. Read these files first: `<CLAUDE_PLUGIN_ROOT>/references/design-system-core.md` and `<CLAUDE_PLUGIN_ROOT>/references/design-system-phase3.md`, then `<site-path>/design/design-tokens.json` (these tokens are LAW). SITE SPEC: [paste compact summary]. CHOSEN LAYOUT: [description of selected layout direction from Phase 3]. USER IMAGES: [paste `user-image-filenames` — if not "none", include: "These user-supplied images are in `<site-path>/design/`. The logo (`<logo-filename>`) MUST appear in the header of every page. Place other images in contextually appropriate sections — choose the best fit per page (hero shots on homepage, team/interior photos on about, product shots on features, etc.). Use the dual-path image pattern so images work both when opened directly AND inside the gallery iframe: `<img src=\"../<filename>\" onerror=\"this.onerror=null;this.src='/?design-asset=<filename>'\" alt=\"...\">`. Every provided image should feel intentionally placed and styled to match the design direction. If no images were provided, use CSS gradients and color blocks instead."] PAGE BRIEFS: [for each page: title, slug, purpose, key sections]. Write one file per page to `<site-path>/design/approved/[slug].html`. Requirements: complete self-contained HTML, real content (no lorem ipsum), real Google Fonts, hover states, scroll animations, consistent identity across all pages, page-specific content (blog: posts with dates; pricing: plan toggle; etc.), no emojis. Return: for each page, the file path and a 1-line description.
 
 ### After Agent Completes
 
@@ -299,6 +315,7 @@ Collect these variables for the final handoff:
 | `site-name` | From Phase 1 |
 | `approved-pages` | List of page slugs from Phase 4 (e.g., `homepage, about, contact, pricing`) |
 | `CLAUDE_PLUGIN_ROOT` | Plugin root path |
+| `user-image-filenames` | List of image files in `<site-path>/design/`, or "none". Identify which is the logo and briefly describe what each photo shows so the agent can place them in appropriate sections. |
 
 ---
 
@@ -320,7 +337,7 @@ Delegate the entire build to a **new Task agent** (`subagent_type: "general-purp
 >
 > **Step 2 — Design package:** Create `<site-path>/design/design-package.json` with layout structure, sections, and custom CSS extracted from the approved mockups and tokens.
 >
-> **Step 3 — Build theme:** Generate all theme files to `<site-path>/wp-content/themes/<theme-slug>/`: theme.json (map design tokens), style.css (rich CSS with animations/hover/dark-mode), functions.php (Google Fonts via enqueue_block_assets, scroll observer), templates/, parts/ (header.html, footer.html, page-title.html), patterns/ (if needed), assets/ (copy any user images from design/), pages/ (WordPress block markup for each approved page, to be imported via WP-CLI). Requirements: no emojis, no stock image URLs.
+> **Step 3 — Build theme:** Generate all theme files to `<site-path>/wp-content/themes/<theme-slug>/`: theme.json (map design tokens), style.css (rich CSS with animations/hover/dark-mode), functions.php (Google Fonts via enqueue_block_assets, scroll observer), templates/, parts/ (header.html, footer.html, page-title.html), patterns/ (if needed), assets/ (copy user images from `<site-path>/design/` to `assets/`), pages/ (WordPress block markup for each approved page, to be imported via WP-CLI). USER IMAGES: [paste `user-image-filenames`]. If user images exist: the logo MUST appear in header.html (use `<!-- wp:image -->` or `<!-- wp:site-logo -->`). Place other images in contextually appropriate page sections using `<!-- wp:image -->` blocks or as backgrounds in Cover/Group blocks — every image should feel intentionally placed and styled to match the design direction. Do not just copy them to assets and ignore them. If no user images, use CSS gradients and color blocks. Requirements: no emojis, no stock image URLs.
 >
 > **Step 4 — Fix block markup:** Run `node <CLAUDE_PLUGIN_ROOT>/scripts/block-fixer/cli.js <site-path>/wp-content/themes/<theme-slug>`
 >
