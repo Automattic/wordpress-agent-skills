@@ -226,7 +226,9 @@ When user selects a tile (or mixes): delegate extraction to a subagent reading `
 ```
 Read(${CLAUDE_PLUGIN_ROOT}/references/design-system-phase2.md, limit=1)
 Write(<site-path>/design/.warm, "")
-``` Run WCAG contrast verification. Write to `<site-path>/design/design-tokens.json` AND `<site-path>/design/design-patterns.html`. Update `gallery.json` — set `phase` to `pages`, add `tokens` object. Confirm with summary.
+```
+
+Run WCAG contrast verification. Write to `<site-path>/design/design-tokens.json` AND `<site-path>/design/design-patterns.html`. Update `gallery.json` — set `phase` to `pages`, add `tokens` object. Confirm with summary.
 
 **Output:** `<site-path>/design/design-tokens.json`, `<site-path>/design/design-patterns.html`
 

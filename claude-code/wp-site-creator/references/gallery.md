@@ -46,6 +46,7 @@ All design outputs live inside the Studio site at `<site-path>/design/`. Theme f
 │   └── ...
 │
 ├── design-tokens.json
+├── design-patterns.html
 ├── design-package.json
 ├── site-spec.json
 ├── image-prompts.json
