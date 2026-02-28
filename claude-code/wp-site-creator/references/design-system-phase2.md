@@ -41,6 +41,16 @@ Each tile should feel like a **mini homepage hero**, not a swatch card. Go beyon
 - **Not a swatch card** — Colors alone are meaningless without typography and component context.
 - **Not a mood board** — No stock photos, no collages, no vibes-only artifacts. Every element is a real rendered specimen.
 
+### Logo Integration
+
+If a user-supplied logo is provided, each style tile should incorporate it:
+
+- **Placement**: Display the logo in a compact brand bar at the top of each tile — small enough not to dominate, visible enough to judge the pairing with the tile's palette and typography.
+- **Color harmony**: The tile's color palette must account for the logo's dominant colors. Don't clash — complement or contrast intentionally. If the logo is warm-toned, a cool palette can work if the interplay is deliberate, but a palette that fights the logo's colors is a failure.
+- **The logo is secondary**: Style tiles are about design atoms (fonts, colors, spacing, buttons). The logo is there so the user can judge whether the direction works with their brand mark — it's not the focal point of the tile.
+- **Reference path**: Use a dual-path `<img>` tag that works both when opened directly as a file AND when served inside the gallery iframe. The pattern: `<img src="../<logo-filename>" onerror="this.onerror=null;this.src='/?design-asset=<logo-filename>'" alt="...">`. The relative `../` path works for direct file access (tiles are in `styles/`, images in `design/`); the `onerror` fallback loads via the gallery's asset route when the relative path fails inside an iframe. Apply the same dual-path pattern to ALL user-supplied images, not just the logo.
+- **No logo, no problem**: If no logo was provided, skip the brand bar entirely. Don't use placeholder logos or text-only stand-ins.
+
 ### Thematic Embellishments
 
 Each tile gets CSS-only decorative elements that reinforce its mood and the site's personality. These are subtle but alive — they give each card character beyond just "colors + fonts."
@@ -162,6 +172,48 @@ Users will often say "I like the colors from Tile 2 but the typography from Tile
    - Expressive motion + compact spacing (visual chaos) — recommend reducing one
    - Heavy display heading font + heavy body font (no hierarchy) — suggest a lighter body weight
 3. **Present the merged set** — Show the full merged token object to the user and ask for confirmation before writing to `outputs/design-tokens.json`. Never silently merge.
+
+## Design Patterns Extraction
+
+When the user locks a tile, extract **`design-patterns.html`** alongside `design-tokens.json`. Tokens capture design primitives (colors, fonts, spacing); patterns capture the component-level personality — how cards, heroes, buttons, and embellishments actually look and behave. Without patterns, Phase 3+ agents reinvent these from scratch and the approved tile's personality is lost.
+
+### What to Include
+
+Extract these from the selected tile's HTML and CSS:
+
+| Pattern | What to extract |
+|---------|----------------|
+| **Cards** | Full HTML structure (image area + body with tag/heading/text/button) and CSS (image gradients, foam/texture effects, hover transforms, tag styling) |
+| **Hero** | HTML structure (content + decorative elements) and CSS (background gradients, ambient overlays, grain texture, content constraints, decorative animations) |
+| **Buttons** | Full hover state CSS per variant (transforms, box-shadows, `::after` shimmer overlay, dark-mode adaptations) |
+| **Links** | Decoration thickness, underline offset, hover transitions, dark-mode adaptations |
+| **Embellishments** | HTML structure (e.g. vine with leaf/cone children, bubble extras) and complete CSS (dot patterns, wood grain layers, vine/leaf shapes, bubble float animations) |
+| **Animations** | All `@keyframes` definitions from the tile |
+| **Extra CSS vars** | `--overlay`, `--dot-color`, `--grain-opacity`, `--embellish-opacity` and similar decorative control properties |
+
+### What NOT to Include
+
+These are already captured in `design-tokens.json` — do not duplicate them:
+
+- Palette swatches section (color dots)
+- Typography specimen samples
+- Spacing rhythm visualizer
+- Design notes table
+- Base color/font/spacing CSS custom property declarations
+
+### Output Format
+
+Write a self-contained HTML file to `<site-path>/design/design-patterns.html`:
+
+- A single `<style>` block containing all pattern CSS (component styles, hover states, animations, decorative vars)
+- A `<body>` with labeled sections for each pattern category — use `<section>` elements with heading comments (e.g. `<!-- Cards -->`, `<!-- Hero -->`, `<!-- Embellishments -->`) containing the HTML structures
+- Include the Google Fonts `<link>` tags from the tile so patterns render correctly if opened standalone
+- Estimated size: ~500 lines (vs ~1140 for the full tile)
+
+### Persistence
+
+- **Write** — Save to `<site-path>/design/design-patterns.html` at the same time as `design-tokens.json` when the user locks a direction
+- **Read** — Phase 3 and Phase 4 agents read this file alongside `design-tokens.json` to recreate the approved component patterns
 
 ## Phase 2 Variation Requirements
 

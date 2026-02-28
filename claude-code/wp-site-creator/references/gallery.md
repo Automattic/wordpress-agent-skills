@@ -46,6 +46,7 @@ All design outputs live inside the Studio site at `<site-path>/design/`. Theme f
 │   └── ...
 │
 ├── design-tokens.json
+├── design-patterns.html
 ├── design-package.json
 ├── site-spec.json
 ├── image-prompts.json
@@ -60,6 +61,21 @@ All design outputs live inside the Studio site at `<site-path>/design/`. Theme f
 - Latest version is always the highest number. Never overwrite — always create the next version.
 - No restart naming (`-r2`) — just keep incrementing.
 - `design-tokens.json` and `design-package.json` live at `<site-path>/design/` root (contracts, not visual artifacts).
+
+## Image Paths in Design Artifacts
+
+User-supplied images (logos, photos) live in `<site-path>/design/` while HTML artifacts live in subdirectories (`styles/`, `pages/`, `approved/`). This creates a path problem: relative paths like `../logo.png` work when files are opened directly in a browser, but break inside the gallery iframe (served via `?design-asset=`).
+
+**Solution — dual-path `<img>` tags:** Use an `onerror` fallback so images resolve in both contexts:
+
+```html
+<img src="../logo.png" onerror="this.onerror=null;this.src='/?design-asset=logo.png'" alt="...">
+```
+
+- **Direct file access**: `../logo.png` resolves correctly (up from `styles/` to `design/`)
+- **Gallery iframe**: The relative path fails, `onerror` fires, loads via the gallery's `?design-asset=` route
+
+Apply this pattern to ALL user-supplied images in style tiles, page layouts, and approved mockups. The `?design-asset=` route serves images with correct MIME types (png, jpg, webp, svg, etc.).
 
 ## gallery.json Schema
 
@@ -81,7 +97,7 @@ Written by the orchestrator during gallery scaffolding. Updated as phases progre
   ],
   "artifacts": {
     "styles": [
-      { "file": "v1-tile1.html", "version": 1, "label": "Tile 1: Mood Name", "colors": ["#hex1", "#hex2"] }
+      { "file": "styles/v1-tile1.html", "version": 1, "label": "Tile 1: Mood Name", "colors": ["#hex1", "#hex2"] }
     ],
     "pages": [],
     "approved": []
@@ -108,10 +124,10 @@ Written by the orchestrator during gallery scaffolding. Updated as phases progre
 ### Artifact Object
 
 ```json
-{ "file": "v1-tile1.html", "version": 1, "label": "Tile 1: Mood Name", "colors": ["#hex1", "#hex2"] }
+{ "file": "styles/v1-tile1.html", "version": 1, "label": "Tile 1: Mood Name", "colors": ["#hex1", "#hex2"] }
 ```
 
-- `file` — filename only, without the phase directory prefix (e.g., `v1-tile1.html`). The gallery PHP prepends the phase directory automatically.
+- `file` — path relative to `design/`, including the phase directory prefix (e.g., `styles/v1-tile1.html`, `pages/v1-layout1.html`, `approved/homepage.html`).
 - `version` — integer version number
 - `label` — **required** — short, descriptive mood/theme name shown in the sidebar (e.g., "Butcher Block", "Smoke House", "Street Cart"). Never leave blank or use generic names like "v1" or "Tile 1". For style tiles use the mood/aesthetic name; for page layouts use the layout approach name.
 - `colors` — array of hex colors for the color dots in the sidebar

@@ -85,6 +85,21 @@ Create atmosphere and depth through CSS techniques — but always using the lock
 - **CSS pseudo-elements** — `::before` and `::after` for decorative elements, colored with token palette values
 - **Color overlays** — layered elements with token colors at reduced opacity for atmospheric depth
 
+### Using Design Patterns
+
+`design-patterns.html` is the component-level companion to `design-tokens.json`. Tokens define the palette and primitives; patterns define how components look and behave — the site's visual personality.
+
+**Read `<site-path>/design/design-patterns.html` before generating layouts.** It contains the approved HTML structure and CSS for cards, hero sections, buttons, links, embellishments, and animations extracted from the selected style tile.
+
+**How to use patterns:**
+
+- **Cards, hero sections, buttons** — Match the approved patterns' HTML structure, hover states, and decorative treatments. Adapt to the layout context (e.g. a card pattern can work in a 2-column or 3-column grid) but preserve the visual treatment (gradients, shadows, hover transforms, tag styling).
+- **Embellishments and animations** — Reuse directly. These are the approved decorative personality — dot patterns, wood grain, vine shapes, bubble floats, grain textures, etc. Copy the CSS and HTML structures into your layouts. Do not replace them with generic alternatives.
+- **Link styling** — Use the approved decoration thickness, underline offset, and hover transitions.
+- **Decorative CSS vars** — Carry forward vars like `--overlay`, `--dot-color`, `--grain-opacity`, `--embellish-opacity` from the patterns file.
+
+**Patterns can be adapted but not replaced.** You may adjust a card's image treatment for a different aspect ratio, or reposition embellishments to fit a new section layout. But the visual language — the gradients, textures, hover effects, and decorative elements — must remain recognizably the same as the approved tile.
+
 ### Topic Fit Litmus Test
 
 A viewer should be able to guess what the site is about from the layout and visual treatment alone. If the page could belong to any random site, the composition is too generic — rework it.
