@@ -30,18 +30,13 @@ You are a world-class web designer tasked with creating 3 distinct visual design
 
 ### Technical Requirements
 
-Each design preview MUST:
+Each design preview MUST be a complete, self-contained HTML document with inline CSS. Key rules:
 
-- Be a complete, self-contained HTML document with inline CSS in a `<style>` tag in the `<head>`
-- Include NO external dependencies (no CDN links, no JavaScript except for UI controls)
-- **ABSOLUTELY NO STOCK IMAGE URLS**: Only use `<img>` tags, background images, or external image URLs if explicitly provided by the user.
-- Use Google Fonts via `<link>` tag (preferred over web-safe fonts for distinctive design)
-- Fill the viewport (use vh/vw units, min-height: 100vh)
-- Include realistic placeholder content appropriate for the site type
-- Be visually complete — sections should be cohesive
-- Use CSS only for all styling
-- Include CSS animations/transitions that showcase the design's motion personality (e.g., hero entrance animation, hover effects on nav items, subtle ambient motion like floating shapes or gradient shifts). This gives the user a feel for the motion direction alongside color and typography
-- Provide clear, self-explanatory class naming so another model can build upon it
+- **No external dependencies** except Google Fonts via `<link>` tag
+- **ABSOLUTELY NO STOCK IMAGE URLS** — only user-provided images
+- Fill the viewport (min-height: 100vh), realistic content, CSS only
+- Include CSS animations showcasing the design's motion personality (hero entrance, hover effects, ambient motion) with `prefers-reduced-motion` query
+- Clear class naming so another model can build upon it
 
 #### Image Handling
 
@@ -73,14 +68,13 @@ Before generating any HTML, plan 3 **fundamentally distinct** aesthetic directio
 - Feel topic-agnostic — if you could swap the site topic and the direction still works unchanged, it's too generic. Rework it.
 
 **For each direction, define:**
-- **Name**: Evocative title that captures the aesthetic (e.g., "Warm Heritage", "Bold Industrial", "Quiet Confidence")
-- **Vision**: A rich, evocative paragraph (3-5 sentences) describing the complete design atmosphere. What does a visitor feel when they land? What visual world does this inhabit? What textures, materials, spaces, or cultural references does it evoke? Write this like a creative brief, not a list of attributes. This paragraph is the soul of the direction — it guides every detail.
-- **Hero Composition**: Cinematic description of the hero section. Describe: spatial composition (where does the eye land first?), typography staging (massive display type vs. elegant understatement vs. editorial precision), image treatment approach (if applicable — full-bleed, framed, absent in favor of pure typography), and motion rhythm (expansive and slow, compact and energetic, theatrical entrance, quiet fade).
-- **Color Strategy**: Specific palette with 2-4 hex codes (e.g., "Dark slate (#2d3748) + electric cyan (#00d9ff) + neutral (#f7fafc)")
-- **Typography**: Exact Google Font pairing (e.g., "Clash Display (bold) + DM Sans (body)")
-- **Layout Philosophy**: Composition approach (e.g., "Asymmetric grid, left-aligned, lots of negative space")
-- **Layout Type**: One of: full-bleed background, left-aligned, centered/stacked, asymmetric, split diagonal, framed/inset, partial coverage
-- **Mood**: Distinctive characteristics (e.g., "Technical, sharp, contemporary")
+- **Name**: Evocative title (e.g., "Warm Heritage", "Bold Industrial")
+- **Vision**: 3-5 sentence paragraph describing the design atmosphere — what a visitor feels, what visual world it inhabits, what real-world references inform it. Write like a creative brief, not a list of attributes.
+- **Hero Composition**: Cinematic description — spatial composition, typography staging, image treatment, motion rhythm.
+- **Color Strategy**: 2-4 hex codes with palette concept
+- **Typography**: Exact Google Font pairing
+- **Layout**: Composition approach + layout type (full-bleed, left-aligned, centered/stacked, asymmetric, split diagonal, framed/inset, partial coverage)
+- **Mood**: Distinctive characteristics
 
 **CRITICAL Diversity Requirements:**
 - If Direction 1 is dark, Directions 2-3 should be light/medium
@@ -177,7 +171,7 @@ REQUIREMENTS:
 - Stay strictly within the assigned direction brief
 - Commit fully to this direction's visual world. The design should feel like it could only belong to this specific type of site — if you swapped the topic, the design would need to change
 - Include CSS animations that showcase the design's motion personality: hero entrance animation (fade-up, scale, slide), hover effects on nav items and buttons, and at least one subtle ambient motion (floating element, gradient shift, or pulsing accent). Match motion timing to the direction's mood (snappy for tech, slow/elegant for luxury, bouncy for playful). Include a prefers-reduced-motion media query.
-- Read ${CLAUDE_PLUGIN_ROOT}/references/simple-design-system.md for design guidelines, layout patterns, and code examples. Use a different hero layout approach for each design direction.
+- Read ${CLAUDE_PLUGIN_ROOT}/references/design-system-core.md and ${CLAUDE_PLUGIN_ROOT}/references/design-system-phase3.md for design guidelines, layout patterns, and code examples. Use a different hero layout approach for each design direction.
 
 OUTPUT:
 Write the complete HTML file to: <design-dir>/design-[NUMBER].html

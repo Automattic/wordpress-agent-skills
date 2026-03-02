@@ -5,7 +5,7 @@ argument-hint: "<site description>"
 
 # Quick Build
 
-> This command uses the `site-specification` skill. For theme generation, read `${CLAUDE_PLUGIN_ROOT}/references/wordpress-block-theming.md` and `${CLAUDE_PLUGIN_ROOT}/references/simple-design-system.md`.
+> This command uses the `site-specification` skill. For theme generation, read `${CLAUDE_PLUGIN_ROOT}/references/wordpress-block-theming.md` and `${CLAUDE_PLUGIN_ROOT}/references/design-system-core.md`.
 
 Create a complete WordPress block theme from a simple description. This is the main workflow that guides users through site specification, design selection, and theme generation deployed to a real local WordPress site via Studio.
 
@@ -28,40 +28,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/scripts/track.sh agent-site-builder claude-code-build
 
 ### Step 0: Verify Studio Environment
 
-Before anything else, confirm that WordPress Studio is installed, the CLI is active, and the agent knows where Studio sites live.
-
-1. Run `studio site list` (Bash) to get all existing site paths.
-2. **If the command fails** (non-zero exit code, "command not found", or connection error): Studio is either not installed or its CLI is not enabled. Tell the user:
-
-   "It looks like either WordPress Studio is not installed, or the CLI is not turned on.
-
-   - **To install WordPress Studio:** <https://developer.wordpress.com/studio/>
-   - **To enable the CLI:** <https://developer.wordpress.com/docs/developer-tools/studio/cli/>
-
-   Once Studio is installed and the CLI is enabled, run `/quick-build` again."
-
-   **Stop here** — do not proceed with the rest of the workflow.
-
-3. **If the command succeeds**, derive the Studio home folder:
-   - If sites exist, extract the common parent directory from their paths (e.g., if sites are at `~/Studio/my-site` and `~/Studio/another`, the Studio home is `~/Studio`)
-   - If no sites exist yet, default to `~/Studio`
-4. **Resolve the Studio home to an absolute path** (expand `~`) and store it as `STUDIO_HOME`
-5. **Check the current working directory** against `STUDIO_HOME`:
-   - If the current working directory **is** `STUDIO_HOME` (or a subdirectory of it): proceed — the agent is in the right place
-   - Note that in MacOS dir names are case-insensitive, so treat `~/studio` and `~/Studio` as the same path
-   - If the current working directory is **not** within `STUDIO_HOME`: tell the user:
-
-     "It looks like you're running Claude from `<current-dir>`, but your Studio sites live in `<STUDIO_HOME>`.
-
-     You have two options:
-     1. **Re-run Claude from the Studio folder** — `cd <STUDIO_HOME>` and start a new session
-     2. **Tell me the path** — if your Studio sites are in a different location, let me know and I'll use that
-
-     Which would you prefer?"
-
-     Wait for the user's response. If they provide a path, validate it exists and update `STUDIO_HOME` accordingly. If they choose to re-run, stop here.
-
-Use `STUDIO_HOME` in all subsequent steps wherever a Studio site path is needed.
+Follow the steps in `${CLAUDE_PLUGIN_ROOT}/references/studio-setup.md` to verify Studio is installed, derive `STUDIO_HOME`, and check the working directory. Use `STUDIO_HOME` in all subsequent steps.
 
 ### Step 1: Gather Requirements & Extract Site Specifications
 
@@ -202,43 +169,21 @@ Read these two files before generating anything:
 ```
 
 **Theme generation rules:**
-- Generate `header.html` by extracting the header design from the chosen design preview. Match colors, typography, and layout exactly.
-- Generate `footer.html` suitable for the site type, matching the chosen design approach.
-- The `index.html` template IS the homepage — build it as a full landing page.
-- Generate `page.html` as the template for individual pages. It must include the header and footer template parts and a styled title section at the top that is visually coherent with the landing page hero (matching colors, typography, spacing). Use `<!-- wp:post-title /-->` inside this title section so the page title is dynamic. Below the title section, include `<!-- wp:post-content /-->` to render the page body.
-- Always use the header and footer template parts in `index.html`.
-- Faithfully reproduce the header and hero from the chosen design preview, then **build a complete landing page** — the design preview is a **design sample**, not a finished page.
-- ABSOLUTELY NO STOCK IMAGE URLS: No `<img>` tags, core/image blocks, or background-image CSS should contain remembered stock image URLs. Only use images specifically provided by the user. See the block theming reference Image Handling section for techniques to create visual richness without images.
-- If a user provides a logo image, include it in the header in the most appropriate and tasteful way.
+- **Fidelity**: Faithfully reproduce the header and hero from the chosen design preview, then extrapolate to build a complete landing page. Match colors, typography, spacing, and layout exactly.
+- `header.html`: Extract the header design from the preview.
+- `footer.html`: Suitable for the site type, matching the design approach.
+- `index.html`: IS the homepage — build as a full landing page with header/footer template parts.
+- `page.html`: Include header/footer parts, a styled title section (using `<!-- wp:post-title /-->`) coherent with the hero, and `<!-- wp:post-content /-->` below.
+- ABSOLUTELY NO STOCK IMAGE URLS. Only use user-provided images. See the block theming reference Image Handling section.
+- If a user provides a logo image, include it in the header.
 
 **Image placement in the landing page (REQUIRED when user provides images):**
 If user-provided images exist, you MUST place at least some of them in the homepage template. Do not just copy them to the assets directory — actually use them. For each image, choose the most contextually appropriate section and use `<!-- wp:image -->` blocks, or apply them as backgrounds to Cover or Group blocks.
 Every image should feel intentionally placed and styled to match the design direction — not just dropped in.
 
-**Do not just copy the header and hero.** Build a complete landing page with 5-6 sections.
+**From the chosen design preview, extract and apply:** Typography, colors, spacing, layout patterns, visual effects (shadows, borders, clip-paths, gradients), and motion (hover states, transitions, entrance animations, scroll reveals).
 
-**From the chosen design preview, extract and apply:**
-- Typography: font families, sizes, weights, text-transform, letter-spacing
-- Colors: backgrounds, text colors, accent usage, overlays
-- Spacing: section padding, element gaps, density
-- Layout patterns: full-width sections, constrained content, card grids, alternating backgrounds
-- Visual effects: shadows, borders, clip-paths, glows, gradients
-- Motion: hover states, transitions, entrance animations, scroll reveals
-
-**Identify sections appropriate for the site type:**
-
-| Site Type | Typical Sections (5-6 total) |
-|-----------|------------------------------|
-| **SaaS** | Hero, Features Grid, Benefits/Value Props, Pricing, Testimonials, Final CTA |
-| **Restaurant** | Hero, Menu Highlights, About/Story, Gallery/Ambiance, Hours/Location, Reservations CTA |
-| **Portfolio** | Hero, Featured Work, Services/Skills, About, Testimonials, Contact |
-| **Agency** | Hero, Services Grid, Case Study Showcase, Process/Approach, Team, CTA |
-| **E-commerce** | Hero, Featured Products, Category Grid, Benefits/USPs, Reviews, Newsletter/CTA |
-| **Escape Room** | Hero, Rooms Gallery (3+ cards), Difficulty Info, Testimonials/Stats, Booking CTA, Location |
-
-Use the site spec to choose the best section mix — the table is a guide, not a rigid template.
-
-**Build out 5-6 sections** using the design system extracted from the preview. Every section must feel like it came from the same designer.
+**Build out 5-6 sections** appropriate for the site type using the design system extracted from the preview. Every section must feel like it came from the same designer.
 
 **Motion & Animation**: Use the `className` attribute on blocks for animation classes (e.g., `fade-up`, `slide-in-left`, `animate-on-scroll`, `hover-lift`), then define matching CSS in `style.css`. Add a scroll-observer script in `functions.php`. Include `prefers-reduced-motion` in `style.css`. See the block theming reference Animation & Motion section.
 - **Editor visibility**: Every entrance animation class that sets `opacity: 0` MUST have a `.editor-styles-wrapper` override in `style.css`. See the block theming reference Editor Visibility section.
@@ -252,20 +197,7 @@ Use the site spec to choose the best section mix — the table is a guide, not a
 - **NO HTML BLOCKS** (`<!-- wp:html -->`): Every element must use a proper core block.
 - **No decorative HTML comments**: Only WordPress block delimiters allowed.
 
-**Write each file immediately.** First create directories, then write files:
-1. `mkdir -p <site-path>/wp-content/themes/<theme-slug>/{templates,parts}` (Bash)
-2. Write each file to its absolute path using the Write tool.
-
-**Write order** (smallest first, homepage last):
-1. theme.json
-2. style.css
-3. functions.php
-4. parts/header.html
-5. parts/footer.html
-6. templates/page.html
-7. templates/index.html
-
-Do not write reports, documentation, or README files.
+**Write each file immediately.** First `mkdir -p <site-path>/wp-content/themes/<theme-slug>/{templates,parts}` (Bash), then write each file to its absolute path using the Write tool. Do not write reports or README files.
 
 ### 3. Fix block markup
 
