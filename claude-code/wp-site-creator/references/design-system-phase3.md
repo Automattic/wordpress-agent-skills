@@ -100,6 +100,31 @@ Create atmosphere and depth through CSS techniques — but always using the lock
 
 **Patterns can be adapted but not replaced.** You may adjust a card's image treatment for a different aspect ratio, or reposition embellishments to fit a new section layout. But the visual language — the gradients, textures, hover effects, and decorative elements — must remain recognizably the same as the approved tile.
 
+### Image Treatment
+
+When images are present, unify them with the brand palette using layered CSS treatments rather than displaying raw photos:
+
+```css
+.brand-image-treatment {
+  position: relative;
+}
+.brand-image-treatment img {
+  display: block;
+  width: 100%;
+}
+.brand-image-treatment::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--wp--preset--color--primary) 0%, transparent 60%);
+  mix-blend-mode: multiply;
+  opacity: 0.4;
+  pointer-events: none;
+}
+```
+
+This tints images with the brand's primary color via a gradient overlay and `mix-blend-mode: multiply`, keeping them visually cohesive with the palette. Adjust the gradient angle, color, and opacity per section. For darker, moodier treatments, increase opacity or layer a second overlay with `mix-blend-mode: color`.
+
 ### Topic Fit Litmus Test
 
 A viewer should be able to guess what the site is about from the layout and visual treatment alone. If the page could belong to any random site, the composition is too generic — rework it.

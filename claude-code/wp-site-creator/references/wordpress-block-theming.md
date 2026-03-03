@@ -226,6 +226,27 @@ function theme_slug_register_patterns() {
 add_action( 'init', 'theme_slug_register_patterns' );
 ```
 
+## SVG Noise Filter Injection
+
+When a theme uses the `.has-grain-texture` utility class (see `design-system-phase2.md`), the inline SVG filter definition must be present in the page DOM. Inject it via `wp_footer` in `functions.php`:
+
+```php
+// Inject SVG grain filter for .has-grain-texture utility
+function theme_slug_grain_filter() {
+    ?>
+    <svg style="position:absolute;width:0;height:0" aria-hidden="true">
+        <filter id="grain-filter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+            <feColorMatrix type="saturate" values="0"/>
+        </filter>
+    </svg>
+    <?php
+}
+add_action( 'wp_footer', 'theme_slug_grain_filter' );
+```
+
+Only add this to `functions.php` when the theme actually uses `.has-grain-texture`. The filter is invisible and adds negligible page weight.
+
 ## Security in Generated Code
 
 - When `functions.php` outputs any user-derived value, use WordPress escaping functions:
@@ -257,6 +278,33 @@ Text Domain: theme-slug
 */
 
 ```
+
+## Interactive States (Hard Rule)
+
+**Every clickable element MUST have `:hover`, `:focus-visible`, and `:active` states. No exceptions.**
+
+This applies to: buttons, links, cards with hover-lift, nav items, and any element with a click/tap handler. Missing states make the site feel unfinished and harm accessibility (`:focus-visible` is essential for keyboard navigation).
+
+```css
+/* Example: button with all three states */
+.wp-block-button__link {
+  transition: transform 0.2s var(--ease-default), box-shadow 0.2s var(--ease-default), background-color 0.2s var(--ease-default);
+}
+.wp-block-button__link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--shadow-color), 0.15);
+}
+.wp-block-button__link:focus-visible {
+  outline: 2px solid var(--wp--preset--color--accent);
+  outline-offset: 2px;
+}
+.wp-block-button__link:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+```
+
+**`:focus-visible` vs `:focus`:** Use `:focus-visible` (not `:focus`) so styles only appear for keyboard navigation, not mouse clicks. This prevents the focus ring from showing on click while keeping keyboard users oriented.
 
 ## Animation & Motion in Block Themes
 

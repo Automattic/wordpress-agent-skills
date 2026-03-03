@@ -70,6 +70,38 @@ Each tile gets CSS-only decorative elements that reinforce its mood and the site
 | Corporate / Professional | Subtle geometric patterns, clean line animations |
 | Esports / Gaming | Neon glow pulses, glitch effects, energy trails |
 
+**SVG noise filter for grain/texture:**
+An inline SVG `<feTurbulence>` filter applied as a pseudo-element overlay adds subtle grain that flat CSS gradients lack. This creates tactile depth — especially effective for editorial, vintage, and luxury directions.
+
+```html
+<!-- Inline SVG filter (injected once via functions.php wp_footer hook — see wordpress-block-theming.md) -->
+<svg style="position:absolute;width:0;height:0">
+  <filter id="grain-filter">
+    <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+  </filter>
+</svg>
+```
+
+```css
+/* Utility class — apply via className on wp:group blocks */
+.has-grain-texture {
+  position: relative;
+}
+.has-grain-texture::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  filter: url(#grain-filter);
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+```
+
+Adjust `baseFrequency` (higher = finer grain) and `opacity` (0.05–0.15) to taste. Works on hero sections, CTA bands, card backgrounds — any section that needs subtle texture.
+
 **Embellishment rules:**
 - CSS-only (keyframe animations, pseudo-elements, gradients). No JS, no images.
 - Subtle enough not to obscure the content, visible enough to communicate personality.
@@ -142,6 +174,7 @@ When the user selects a style tile (or mixes elements from multiple tiles), extr
     },
     "motion": {
       "level": "subtle | moderate | expressive",
+      "easing": "cubic-bezier(...) — site's signature easing curve",
       "hoverTransition": "CSS transition shorthand",
       "entranceStyle": "fade-up | slide-in | scale | none",
       "entranceDuration": "0.6s",
@@ -149,8 +182,14 @@ When the user selects a style tile (or mixes elements from multiple tiles), extr
     },
     "surfaces": {
       "borderRadius": "8px",
-      "cardShadow": "CSS box-shadow value",
-      "cardHoverShadow": "CSS box-shadow value"
+      "shadowColor": "R, G, B — brand-tinted shadow base (e.g., from primary color)",
+      "cardShadow": "CSS box-shadow value (layered, color-tinted)",
+      "cardHoverShadow": "CSS box-shadow value (layered, color-tinted)",
+      "elevationTiers": {
+        "base": { "shadow": "none", "surface": "colors.light.background" },
+        "elevated": { "shadow": "layered 1-2 step brand-tinted shadow", "surface": "colors.light.surface" },
+        "floating": { "shadow": "pronounced multi-layer brand-tinted shadow", "surface": "distinct from base" }
+      }
     }
   }
 }
