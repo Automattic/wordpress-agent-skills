@@ -380,6 +380,8 @@ Generate and adapt these classes (these are examples only, do not limit yourself
 .stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
 ```
 
+**Hard rule — never use `transition: all`:** Always name the specific properties to transition. `transition: all` forces the browser to track every animatable property on every frame, causes unintended animations on focus states or JS-triggered style changes, and makes it easy to accidentally animate layout-triggering properties (`width`, `height`, `padding`, `margin`) that bypass GPU compositing and cause repaints. Correct pattern: `transition: transform 0.3s var(--ease-default), opacity 0.2s ease`.
+
 **Interactive transitions:**
 ```css
 .hover-lift {

@@ -156,6 +156,8 @@ Default `ease` and `ease-in-out` feel lifeless. Define a signature easing curve 
 
 Pick one per site and use it consistently via a CSS custom property (`--ease-default`). Reserve `ease` only for simple opacity fades.
 
+**Hard rule — never use `transition: all`:** Animating all properties forces the browser to check every animatable property on every frame, triggering expensive layout recalculations and creating unintended transitions on focus rings, visited links, or JavaScript-driven style changes. Always specify individual properties: `transition: transform 0.3s var(--ease-default), opacity 0.2s ease`. Only `transform` and `opacity` animate on the GPU compositor thread without touching layout.
+
 **Implementation:** See the `${CLAUDE_PLUGIN_ROOT}/references/wordpress-block-theming.md` reference for CSS animation patterns and scroll-trigger integration.
 
 ### Spatial Composition

@@ -22,7 +22,7 @@ You are a workflow orchestrator. Delegate heavy creative work to Task() subagent
 
 All design outputs: `<site-path>/design/`. Theme files: `<site-path>/wp-content/themes/<slug>/`. `<site-path>` is set in Phase 0.5. Use absolute paths in all tool calls.
 
-Key subdirectories: `design/{import,inspiration/screenshots,styles,pages,approved}` plus `design-tokens.json`, `design-package.json`, `site-spec.json`, `gallery.json` at the design root. Gallery is served at `http://<site-url>/?design-gallery`.
+Key subdirectories: `design/{import,inspiration/screenshots,styles,pages,approved,verification}` plus `design-tokens.json`, `design-package.json`, `site-spec.json`, `gallery.json` at the design root. Gallery is served at `http://<site-url>/?design-gallery`.
 
 ## Trigger
 

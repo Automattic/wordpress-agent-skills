@@ -3,6 +3,11 @@
 /**
  * Screenshot utility for WordPress site creator plugin.
  *
+ * Prerequisite: puppeteer-core must be installed.
+ *   npm install -g puppeteer-core   (global)
+ *   — or —
+ *   npm install puppeteer-core      (local, run from this directory)
+ *
  * Usage: node screenshot.mjs <url> <output-path> [viewport-width]
  *
  * Arguments:
@@ -16,7 +21,8 @@ import { resolve } from 'path';
 import { mkdirSync } from 'fs';
 import { dirname } from 'path';
 
-const CHROME_PATH = `${process.env.HOME}/.cache/puppeteer/chrome/mac-145.0.7632.77/chrome-mac-x64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`;
+const CHROME_PATH = process.env.CHROME_PATH
+  || `${process.env.HOME}/.cache/puppeteer/chrome/mac-145.0.7632.77/chrome-mac-x64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`;
 
 const [,, url, outputPath, viewportWidthArg] = process.argv;
 
