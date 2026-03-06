@@ -28,6 +28,28 @@
       },
       "category": "wordpress",
       "tags": ["wordpress", "themes", "block-themes", "studio"]
+    },
+    {
+      "name": "content-coach-code",
+      "source": "./claude-code/content-coach",
+      "description": "AI-powered content reviewer that analyzes WordPress posts across four pillars and delivers actionable feedback as block notes directly in the editor.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Automattic"
+      },
+      "category": "wordpress",
+      "tags": ["wordpress", "content", "review", "accessibility", "seo", "block-notes"]
+    },
+    {
+      "name": "content-coach",
+      "source": "./claude-cowork/content-coach",
+      "description": "AI-powered content reviewer that analyzes WordPress posts across four pillars and delivers actionable feedback as block notes directly in the editor.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Automattic"
+      },
+      "category": "wordpress",
+      "tags": ["wordpress", "content", "review", "accessibility", "seo", "block-notes"]
     }
   ]
 }
