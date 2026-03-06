@@ -34,13 +34,6 @@ Each tile should feel like a **mini homepage hero**, not a swatch card. Go beyon
 
 **The test:** If you squint at the 3 tiles and they look roughly the same shape and density, you've failed. They should be immediately distinguishable at a glance.
 
-### What a Style Tile is NOT
-
-- **Not a full page** — No hero sections, no navigation, no footer. Just the design atoms.
-- **Not tabbed panels** — All 3 tiles are visible at once in a single row. The whole point is comparison.
-- **Not a swatch card** — Colors alone are meaningless without typography and component context.
-- **Not a mood board** — No stock photos, no collages, no vibes-only artifacts. Every element is a real rendered specimen.
-
 ### Logo Integration
 
 If a user-supplied logo is provided, each style tile should incorporate it:

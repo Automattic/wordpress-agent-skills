@@ -38,49 +38,11 @@ User runs `/design-site` with a site description, or asks to design/build/make a
 
 ## Phase 0.5: Studio Environment Setup
 
-Before any design work begins, confirm that WordPress Studio is installed, the CLI is active, and establish the site path that all subsequent phases will use.
+Follow the steps in `${CLAUDE_PLUGIN_ROOT}/references/studio-setup.md` to verify Studio, derive `STUDIO_HOME`, and create or select a site. Store `<site-path>` for all subsequent phases.
 
-1. Run `studio site list` (Bash) to get all existing site paths.
-2. **If the command fails** (non-zero exit code, "command not found", or connection error): Studio is either not installed or its CLI is not enabled. Tell the user:
+Then:
 
-   "It looks like either WordPress Studio is not installed, or the CLI is not turned on.
-
-   - **To install WordPress Studio:** <https://developer.wordpress.com/studio/>
-   - **To enable the CLI:** <https://developer.wordpress.com/docs/developer-tools/studio/cli/>
-
-   Once Studio is installed and the CLI is enabled, run `/design-site` again."
-
-   **Stop here** — do not proceed with the rest of the workflow.
-
-3. **If the command succeeds**, derive the Studio home folder:
-   - If sites exist, extract the common parent directory from their paths (e.g., if sites are at `~/Studio/my-site` and `~/Studio/another`, the Studio home is `~/Studio`)
-   - If no sites exist yet, default to `~/Studio`
-4. **Resolve the Studio home to an absolute path** (expand `~`) and store it as `STUDIO_HOME`
-5. **Check the current working directory** against `STUDIO_HOME`:
-   - If the current working directory **is** `STUDIO_HOME` (or a subdirectory of it): proceed — the agent is in the right place
-   - Note that in MacOS dir names are case-insensitive, so treat `~/studio` and `~/Studio` as the same path
-   - If the current working directory is **not** within `STUDIO_HOME`: tell the user:
-
-     "It looks like you're running Claude from `<current-dir>`, but your Studio sites live in `<STUDIO_HOME>`.
-
-     You have two options:
-     1. **Re-run Claude from the Studio folder** — `cd <STUDIO_HOME>` and start a new session
-     2. **Tell me the path** — if your Studio sites are in a different location, let me know and I'll use that
-
-     Which would you prefer?"
-
-     Wait for the user's response. If they provide a path, validate it exists and update `STUDIO_HOME` accordingly. If they choose to re-run, stop here.
-
-6. Ask the user: use an existing Studio site or create a new one?
-7. If **new**: derive a theme slug from the site name (kebab-case, validate: `^[a-z0-9-]+$`), then:
-   ```bash
-   studio site create --path <STUDIO_HOME>/<theme-slug> --name "<site-name>" --skip-browser
-   ```
-8. If **existing**: use the selected site's path; run `studio site start --path <site-path>` if the site is not already running
-
-Store `<site-path>` for all subsequent phases. Use `STUDIO_HOME` and `<site-path>` in all paths from this point forward.
-
-9. **Install gallery mu-plugin:**
+1. **Install gallery mu-plugin:**
    ```bash
    mkdir -p <site-path>/wp-content/mu-plugins
    cp ${CLAUDE_PLUGIN_ROOT}/templates/design-gallery.php <site-path>/wp-content/mu-plugins/
@@ -147,14 +109,11 @@ Follow the card with ONE casual sentence — the single most interesting design 
 Then ask: "Anything to adjust?"
 
 **HARD RULES:**
-- Brief and Design Direction are natural language prose — no key:value pairs, no field labels.
-- Design Direction must NOT name specific fonts — describe the type direction in vibe terms ("clean geometric type," not "Satoshi").
-- Structure uses tree markers (`┌ ├ └`), one line per section.
-- No right border — left edge only. ~72 chars wide, ~25 lines max.
-- The editorial is ONE sentence. Not two. Not a paragraph. One.
-- No jargon. No "visual language," "design motif," "spatial composition," or "typographic hierarchy." Talk like you're explaining it to a friend.
-- No markdown formatting (no bold, no italics, no bullets) in the editorial.
-- The card + one sentence + "Anything to adjust?" is the ENTIRE Phase 1 output. That's it. Done.
+- Brief and Design Direction: natural language prose, no key:value pairs, no field labels.
+- No specific font names in Design Direction — vibe terms only ("clean geometric type," not "Satoshi").
+- Structure: tree markers (`┌ ├ └`), one line per section. Left edge only, ~72 chars wide, ~25 lines max.
+- Editorial: ONE sentence, no jargon, no markdown formatting. Talk like a person.
+- Output is the card + one sentence + "Anything to adjust?" — nothing more.
 
 ### If `$ARGUMENTS` is empty:
 
@@ -293,20 +252,7 @@ Spawn a new Task agent for revisions: `v[next]-layout[1|2|3].html`. Update `gall
 
 ### Plan Pages
 
-Suggest based on site type:
-
-| Site Type | Suggested Pages |
-|-----------|----------------|
-| SaaS | Homepage, Features, Pricing, About, Contact, Blog, Blog Post |
-| Restaurant | Homepage, Menu, About, Reservations, Gallery |
-| Portfolio | Homepage, Work, Project Detail, About, Contact |
-| Law Firm | Homepage, Practice Areas, Team, About, Contact |
-| Blog | Homepage, About, Contact, Blog, Blog Post |
-| Non-profit | Homepage, Programs, About, Donate, Contact |
-| Agency | Homepage, Services, Work, About, Contact |
-| E-commerce | Homepage, Shop, About, FAQ, Contact |
-
-Present conversationally. Wait for confirmation.
+Suggest pages appropriate for the site type. Present conversationally. Wait for confirmation.
 
 ### Generate Pages (Task Agent)
 

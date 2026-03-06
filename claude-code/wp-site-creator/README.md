@@ -38,7 +38,7 @@ claude --plugin-dir ./claude-code/wp-site-creator
 | `references/design-system-core.md` | Shared design principles, aesthetics, motion — read by all phase subagents |
 | `references/design-system-phase2.md` | Style tiles, embellishments, token extraction — read by Phase 2 subagents |
 | `references/design-system-phase3.md` | Page layout, grid math, visual richness — read by Phase 3/4 subagents |
-| `references/simple-design-system.md` | Design philosophy, aesthetic guidelines, and layout patterns — read by subagents at execution time (not auto-loaded) |
+| `references/studio-setup.md` | Studio environment verification and site creation — referenced by quick-build and design-site commands |
 
 ## Telemetry
 
