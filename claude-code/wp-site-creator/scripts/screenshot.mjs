@@ -52,13 +52,30 @@ try {
   const page = await browser.newPage();
   await page.setViewport({ width: viewportWidth, height: viewportHeight });
 
-  await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
+  await page.goto(url, { waitUntil: 'networkidle2', timeout: 90000 });
 
   // Wait for Google Fonts to finish loading
   await page.evaluate(() => document.fonts.ready);
 
-  // Brief pause for CSS animations to reach initial state
-  await new Promise(r => setTimeout(r, 500));
+  // Scroll through the entire page to trigger IntersectionObserver-based
+  // scroll-reveal animations, then scroll back to top
+  await page.evaluate(async () => {
+    const scrollStep = Math.max(300, window.innerHeight * 0.6);
+    const maxScroll = document.body.scrollHeight;
+    for (let y = 0; y < maxScroll; y += scrollStep) {
+      window.scrollTo(0, y);
+      await new Promise(r => setTimeout(r, 100));
+    }
+    // Hit the very bottom
+    window.scrollTo(0, maxScroll);
+    await new Promise(r => setTimeout(r, 200));
+    // Back to top
+    window.scrollTo(0, 0);
+    await new Promise(r => setTimeout(r, 200));
+  });
+
+  // Wait for all animations to finish (reveal duration + stagger delays)
+  await new Promise(r => setTimeout(r, 1500));
 
   await page.screenshot({ path: resolvedOutput, fullPage: true });
 

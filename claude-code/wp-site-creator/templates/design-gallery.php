@@ -9,7 +9,7 @@ if ( ! isset( $_GET['design-gallery'] ) && ! isset( $_GET['design-asset'] ) && !
 	return;
 }
 
-add_action( 'template_redirect', function () {
+add_action( 'init', function () {
 	$design_dir = ABSPATH . 'design/';
 
 	// ── Route: JSON API (for auto-poll) ──
