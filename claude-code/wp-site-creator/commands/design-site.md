@@ -22,7 +22,7 @@ You are a workflow orchestrator. Delegate heavy creative work to Task() subagent
 
 All design outputs: `<site-path>/design/`. Theme files: `<site-path>/wp-content/themes/<slug>/`. `<site-path>` is set in Phase 0.5. Use absolute paths in all tool calls.
 
-Key subdirectories: `design/{import,inspiration/screenshots,styles,pages,approved,verification}` plus `design-tokens.json`, `design-package.json`, `site-spec.json`, `gallery.json` at the design root. Gallery is served at `http://<site-url>/?design-gallery`.
+Key subdirectories: `design/{import,inspiration/screenshots,styles,pages,approved,verification}` plus `site-spec.md`, `design-tokens.json`, `design-package.json`, `gallery.json` at the design root. Gallery is served at `http://<site-url>/?design-gallery`.
 
 ## Trigger
 
@@ -170,9 +170,19 @@ Then ask: "Anything to adjust?"
 Ask the user to describe their site:
 "Tell me about the site you want to create. Include the name, what it's for, and any style preferences you have."
 
+### Save Site Spec
+
+After the user confirms the spec (or after adjustments), write the confirmed specification to `<site-path>/design/site-spec.md`. Format it as readable markdown with sections for the brief, design direction, and structure. This file is the source of truth for all subsequent phases — subagents read it from disk rather than receiving it pasted into prompts.
+
+```bash
+mkdir -p <site-path>/design
+```
+
+Then write the spec using the Write tool to `<site-path>/design/site-spec.md`.
+
 ### Image Collection
 
-After the spec is confirmed and before planning directions, ask:
+After the spec is saved and before planning directions, ask:
 
 "If you have any images or design documents that will inform the design — logos, photos, brand guidelines, mood boards, etc. — please share the folder they are located in with me."
 
