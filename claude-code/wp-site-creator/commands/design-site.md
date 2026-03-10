@@ -397,6 +397,13 @@ Write(<site-path>/design/approved/.warm, "")
 4. Re-screenshot and re-evaluate (max 2 fix rounds per page).
 5. Save final screenshots in `design/verification/` — these are the "approved specification" that Phase 5 must match.
 
+**Copy assets to site root:** Copy all user-supplied assets (logos, images) from the design directory to the site root so absolute paths (e.g., `/logo-black.png`) resolve correctly in the gallery iframe:
+```bash
+cp {{site-path}}/design/*.png {{site-path}}/ 2>/dev/null || true
+cp {{site-path}}/design/*.jpg {{site-path}}/ 2>/dev/null || true
+cp {{site-path}}/design/*.svg {{site-path}}/ 2>/dev/null || true
+```
+
 Then: Update `gallery.json` — set `phase` to `approved`, add page files to `artifacts.approved`. Say: "Full site mockup ready — [N] pages in the gallery."
 
 ### Iteration
@@ -404,6 +411,73 @@ Then: Update `gallery.json` — set `phase` to `approved`, add page files to `ar
 Page changes: spawn a new Task agent writing `[slug]-v2.html`. New pages: new file. Token changes: update and propagate. Always increment, never overwrite.
 
 **Output:** Approved HTML mockups in `<site-path>/design/approved/`.
+
+### Dual Preview Mode
+
+After mockup generation and QA are complete, offer both preview methods:
+
+1. **Gallery** (already running): `{{site-url}}/?design-gallery` — auto-polls for new assets during generation
+2. **Static dev server** (start now): Launch a local dev server for instant page review without WordPress PHP overhead:
+   ```bash
+   python3 -m http.server 8888 --directory {{site-path}}/design/approved/ &
+   DEV_SERVER_PID=$!
+   ```
+
+Present both URLs to the user:
+> Your approved mockups are ready for review:
+> - **Gallery view**: {{site-url}}/?design-gallery
+> - **Direct preview** (faster): http://localhost:8888/
+>
+> The direct preview serves files instantly without WordPress overhead. Use it for detailed page review.
+
+**Note:** Kill the dev server when transitioning to Phase 5: `kill $DEV_SERVER_PID 2>/dev/null`
+
+---
+
+## Phase 4.5: Content Extraction
+
+**Goal:** Extract all content from approved mockups into structured JSON so the build agent has a character-accurate source of truth.
+
+Create the output directory:
+```bash
+mkdir -p {{site-path}}/design/content
+```
+
+For each approved page in `{{site-path}}/design/approved/`, spawn a parallel Task agent with this prompt:
+
+> Read `{{site-path}}/design/approved/{{slug}}.html`. Extract every piece of content into a structured JSON file at `{{site-path}}/design/content/{{slug}}.json`.
+>
+> JSON schema:
+> ```json
+> {
+>   "slug": "...",
+>   "title": "Page Title",
+>   "sections": [
+>     {
+>       "id": "section-1",
+>       "type": "hero|features|cta|testimonials|...",
+>       "background": "color value or class name",
+>       "elements": [
+>         { "tag": "h1", "text": "Exact heading text", "className": "..." },
+>         { "tag": "p", "text": "Exact paragraph text character-for-character", "className": "..." },
+>         { "tag": "a", "text": "Link label", "href": "/path", "className": "..." },
+>         { "tag": "img", "src": "/image.jpg", "alt": "Alt text", "className": "..." }
+>       ]
+>     }
+>   ]
+> }
+> ```
+>
+> **Rules:**
+> - Preserve ALL text exactly as written — do not paraphrase, summarize, or rewrite
+> - Include every heading, paragraph, link label, button text, form placeholder, image alt text, and list item
+> - Capture className for every element
+> - Capture href for every link, src and alt for every image
+
+After all extraction agents complete, validate:
+- Each JSON file exists in `{{site-path}}/design/content/`
+- Each has a non-empty `sections` array
+- Section count roughly matches the number of major sections in the corresponding HTML
 
 ---
 
@@ -426,6 +500,7 @@ Collect these variables for the final handoff:
 | `approved-pages` | List of page slugs from Phase 4 (e.g., `homepage, about, contact, pricing`) |
 | `CLAUDE_PLUGIN_ROOT` | Plugin root path |
 | `user-image-filenames` | List of image files in `<site-path>/design/`, or "none". Identify which is the logo and briefly describe what each photo shows so the agent can place them in appropriate sections. |
+| `content-jsons` | Content JSON files in `<site-path>/design/content/` — character-accurate text content extracted from approved mockups |
 
 ---
 
@@ -460,13 +535,68 @@ Write(<site-path>/wp-content/themes/<theme-slug>/.warm, "")
 >
 > **Fidelity rule:** The approved mockups are the specification, not inspiration. The WordPress site must visually match them. Extract every CSS rule from the approved mockups' `<style>` blocks and from `design-patterns.html` into `style.css`, preserving all class names, values, and component structures. Do not regenerate CSS from tokens alone — the mockups contain custom component styles (card layouts, embellishments, section treatments) that go beyond what tokens capture.
 >
-> **Core blocks only:** You must do your best to faithfully reproduce the mockup designs using core blocks only. Do not resort to `<!-- wp:html -->` to achieve this, but get as close as possible using standard core blocks (`wp:group`, `wp:columns`, `wp:cover`, `wp:image`, `wp:paragraph`, `wp:heading`, `wp:buttons`, etc.) with additional CSS classes and custom properties. When a mockup pattern requires a specific internal structure (e.g., a horizontal card with a colored sidebar), use nested `wp:group` and `wp:columns` blocks with CSS classes that trigger the correct layout in `style.css`.
+> **Link color override caution:** When `theme.json` sets a global link color, it overrides custom link colors in the footer and other dark sections via WordPress specificity. The generated `style.css` must include scoped anchor resets for sections with custom link styling:
+> ```css
+> .site-footer a { color: inherit; text-decoration: none; }
+> .footer-nav-link, .footer-nav-link a { color: rgba(255,255,255,0.5) !important; }
+> ```
+> Any section with custom link colors needs explicit `!important` overrides to beat WordPress global link color specificity.
+>
+> **Background section animation fix:** Sections with `animate-on-scroll` that also have a background color (`has-background`) must NOT animate opacity on the section wrapper itself. Keep the section at `opacity: 1; transform: none` and animate children elements instead:
+> ```css
+> .wp-block-group.alignfull.animate-on-scroll.has-background,
+> .wp-block-cover.alignfull.animate-on-scroll {
+>   opacity: 1;
+>   transform: none;
+> }
+> /* Children start hidden */
+> .animate-on-scroll.has-background > .wp-block-group__inner-container > *,
+> .wp-block-cover.animate-on-scroll > .wp-block-cover__inner-container > * {
+>   opacity: 0;
+>   transform: translateY(30px);
+>   transition: opacity 0.6s ease, transform 0.6s ease;
+> }
+> /* Reveal children when section is visible */
+> .animate-on-scroll.has-background.is-visible > .wp-block-group__inner-container > *,
+> .animate-on-scroll.is-visible > .wp-block-cover__inner-container > * {
+>   opacity: 1;
+>   transform: translateY(0);
+> }
+> ```
+>
+> **Content source of truth:** For page text content, use the JSON files in `{{site-path}}/design/content/` as the authoritative source. Reproduce every heading, paragraph, and CTA character-for-character from these files. Do NOT extract or rewrite content from the raw HTML mockups.
+>
+> **Block markup policy:** PREFER core blocks for all content. Use `<!-- wp:html -->` only as a last resort for patterns genuinely impossible with core blocks (overlay card grids, complex flex layouts). Never use HTML blocks for headings, paragraphs, buttons, images, or any element with a direct core block equivalent. Before using an HTML block, document what core block approach was attempted and why it failed. Get as close as possible using standard core blocks (`wp:group`, `wp:columns`, `wp:cover`, `wp:image`, `wp:paragraph`, `wp:heading`, `wp:buttons`, etc.) with additional CSS classes and custom properties. When a mockup pattern requires a specific internal structure (e.g., a horizontal card with a colored sidebar), use nested `wp:group` and `wp:columns` blocks with CSS classes that trigger the correct layout in `style.css`.
 >
 > **Step 3 — Build theme:** Generate all theme files to `<site-path>/wp-content/themes/<theme-slug>/`: theme.json (map design tokens), style.css (rich CSS with animations/hover/dark-mode), functions.php (Google Fonts via enqueue_block_assets, scroll observer), templates/ (templates must use `{"type":"default"}` layout on the main content wrapper so full-width blocks render edge-to-edge; only use `"constrained"` on inner groups where you need a max-width), parts/ (header.html, footer.html, page-title.html), patterns/ (if needed), assets/ (copy user images from `<site-path>/design/` to `assets/`), pages/ (WordPress block markup for each approved page, to be imported via WP-CLI). USER IMAGES: [paste `user-image-filenames`]. If user images exist: the logo MUST appear in header.html (use `<!-- wp:image -->` or `<!-- wp:site-logo -->`). Place other images in contextually appropriate page sections using `<!-- wp:image -->` blocks or as backgrounds in Cover/Group blocks — every image should feel intentionally placed and styled to match the design direction. Do not just copy them to assets and ignore them. If no user images, use CSS gradients and color blocks. Requirements: no emojis, no stock image URLs.
 >
 > **Step 4 — Fix block markup:** Run `node <CLAUDE_PLUGIN_ROOT>/scripts/block-fixer/cli.js <site-path>/wp-content/themes/<theme-slug>`
 >
-> **Step 5 — Activate and deploy:** (a) `studio wp --path <site-path> theme activate <theme-slug>`, (b) `studio wp --path <site-path> option update blogname "<site-name>"`, (c) for each page: `studio wp --path <site-path> post create --post_type=page --post_title="<title>" --post_name="<slug>" --post_content="$(cat <site-path>/wp-content/themes/<theme-slug>/pages/<page-slug>.html)" --post_status=publish`, (d) set front page: `studio wp --path <site-path> option update show_on_front page` then `studio wp --path <site-path> option update page_on_front <home-page-id>`, (e) `studio site status --path <site-path>` to get the site URL.
+> **Resolve slug conflicts:** Before creating pages, check for existing pages with conflicting slugs:
+> ```bash
+> studio wp --path {{site-path}} post list --post_type=page --post_status=any --fields=ID,post_name,post_status --format=csv
+> ```
+> For each approved page slug, if an existing page holds that slug, trash it:
+> ```bash
+> studio wp --path {{site-path}} post delete <ID> --force
+> ```
+> This ensures new pages get clean slugs (e.g., `/portfolio` not `/portfolio-2`).
+>
+> **Step 5 — Activate and deploy:** (a) `studio wp --path <site-path> theme activate <theme-slug>`, (a2) **Deactivate competing plugins:** After activating the new theme, deactivate known page-builder plugins that inject competing CSS/JS:
+> ```bash
+> studio wp --path {{site-path}} plugin deactivate fusion-builder fusion-core revslider js_composer jetpack jetpack-starter 2>/dev/null || true
+> ```
+> (b) `studio wp --path <site-path> option update blogname "<site-name>"`, (c) **Page creation (two-step to avoid shell escaping issues):** For each page:
+> 1. Create the page (empty):
+> ```bash
+> PAGE_ID=$(studio wp --path {{site-path}} post create --post_type=page --post_title="{{title}}" --post_name="{{slug}}" --post_status=publish --porcelain)
+> ```
+> 2. Update with content separately:
+> ```bash
+> CONTENT=$(cat {{site-path}}/wp-content/themes/{{theme-slug}}/pages/{{slug}}.html)
+> studio wp --path {{site-path}} post update $PAGE_ID --post_content="$CONTENT"
+> ```
+> Do NOT use `--post_content="$(cat file.html)"` in the create command — it breaks on special characters., (d) set front page: `studio wp --path <site-path> option update show_on_front page` then `studio wp --path <site-path> option update page_on_front <home-page-id>`, (e) `studio site status --path <site-path>` to get the site URL.
 >
 > **Step 5b — Verify:** For each page, compare the CSS classes used in the page block markup against what exists in `style.css`. If any class from the approved mockups is missing from `style.css`, add it. This is a safety net — every component class must have a corresponding CSS rule.
 >

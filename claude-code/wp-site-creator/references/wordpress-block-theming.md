@@ -9,7 +9,12 @@ Comprehensive knowledge for building WordPress block themes using Full Site Edit
 
 ## Absolute Rules
 
-- **NO HTML BLOCKS**: Never use `<!-- wp:html -->` (the `core/html` block). HTML blocks are opaque blobs in the block editor — users cannot select, style, or rearrange individual elements inside them. Every piece of content MUST use a proper core block (`wp:group`, `wp:heading`, `wp:paragraph`, `wp:columns`, etc.). If you find yourself reaching for `wp:html`, stop and decompose the content into the correct core blocks with `className` attributes and CSS instead.
+- **PREFER CORE BLOCKS**: Always attempt to reproduce designs using core blocks (`wp:group`, `wp:columns`, `wp:cover`, `wp:image`, `wp:heading`, `wp:paragraph`, `wp:buttons`, etc.) with `className` attributes and CSS. This is the default and strongly preferred approach.
+- **LAST-RESORT HTML BLOCKS**: If a specific UI pattern is genuinely impossible to achieve with core blocks alone (e.g., card grids with overlay badges and pseudo-element gradients, complex flex layouts with mixed button styles, portfolio headers with flex-row title/button alignment), you may use `<!-- wp:html -->` as a last resort. Before using an HTML block, you must:
+  1. Document which core block combination you attempted and why it failed
+  2. Keep the HTML block as small as possible — wrap only the irreducible pattern, not an entire section
+  3. Never use HTML blocks for content that benefits from block-editor editing (headings, paragraphs, images)
+- **NEVER use HTML blocks for**: headings, paragraphs, buttons, images, or any single element that has a direct core block equivalent.
 - **NO DECORATIVE HTML COMMENTS**: Never insert non-block HTML comments like `<!-- Hero Section -->` or `<!-- Features -->` in templates, template parts, or patterns. The only HTML comments allowed are WordPress block delimiters (`<!-- wp:block-name -->` / `<!-- /wp:block-name -->`).
 
 ## Theme Architecture
@@ -256,6 +261,19 @@ Only add this to `functions.php` when the theme actually uses `.has-grain-textur
 - Never use `eval()`, `create_function()`, `shell_exec()`, `exec()`, or `system()` in generated theme code
 - Static block themes with hardcoded content (the default) do not need escaping — WordPress core blocks handle this. Escaping matters only if generating PHP that renders dynamic data.
 
+### Global Link Color Override
+
+When `theme.json` sets a global link color via `styles.elements.link.color.text`, WordPress applies it at high specificity site-wide. This overrides custom link colors in footers, dark sections, and any component with its own link styling — causing light-colored links to appear in dark backgrounds where they are unreadable.
+
+**Fix:** Sections with custom link colors must include explicit overrides in `style.css`:
+
+```css
+.site-footer a { color: inherit; text-decoration: none; }
+.footer-nav-link, .footer-nav-link a { color: rgba(255,255,255,0.5) !important; }
+```
+
+Use `!important` for footer and dark-section link colors to beat the global specificity set by `theme.json` element styles.
+
 ## style.css
 
 The style.css file contains theme metadata and custom CSS.
@@ -478,6 +496,29 @@ Then in `style.css`, pair with CSS that starts elements hidden and animates them
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 .animate-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+```
+
+**Background sections:** Do not animate `opacity` on sections that have a background color (`has-background`). The background fading from transparent is visually jarring — the page shows through the section momentarily. Instead, keep the section at `opacity: 1; transform: none` and animate only its children:
+
+```css
+.wp-block-group.alignfull.animate-on-scroll.has-background,
+.wp-block-cover.alignfull.animate-on-scroll {
+  opacity: 1;
+  transform: none;
+}
+/* Children start hidden */
+.animate-on-scroll.has-background > .wp-block-group__inner-container > *,
+.wp-block-cover.animate-on-scroll > .wp-block-cover__inner-container > * {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+/* Reveal children when section is visible */
+.animate-on-scroll.has-background.is-visible > .wp-block-group__inner-container > *,
+.animate-on-scroll.is-visible > .wp-block-cover__inner-container > * {
   opacity: 1;
   transform: translateY(0);
 }

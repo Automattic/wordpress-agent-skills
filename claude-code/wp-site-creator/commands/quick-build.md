@@ -248,8 +248,9 @@ Use the site spec to choose the best section mix — the table is a guide, not a
 - Match colors, typography, and style exactly to the selected design
 - Include Google Fonts **and the theme stylesheet** (`get_stylesheet_uri()`) via `enqueue_block_assets` hook
 - Add equal-cards CSS for card layouts
+- **Link color override caution:** When `theme.json` sets a global link color, it overrides custom link colors in footers and dark sections. Include scoped anchor resets in `style.css` for sections with custom link styling (e.g., `.site-footer a { color: inherit; text-decoration: none; }`). Use `!important` for footer and dark-section link colors to beat WordPress global link color specificity.
 - NO EMOJIS in any content
-- **NO HTML BLOCKS** (`<!-- wp:html -->`): Every element must use a proper core block.
+- **Block markup policy:** PREFER core blocks for all content (`wp:group`, `wp:columns`, `wp:cover`, `wp:heading`, `wp:paragraph`, `wp:buttons`, etc.) with `className` attributes and CSS. Use `<!-- wp:html -->` only as a last resort for UI patterns genuinely impossible with core blocks (e.g., card grids with overlay badges, complex flex layouts with mixed button styles). Never use HTML blocks for headings, paragraphs, buttons, images, or any element with a direct core block equivalent. Before using an HTML block, document what core block approach was attempted and why it failed. Keep HTML blocks as small as possible — wrap only the irreducible pattern.
 - **No decorative HTML comments**: Only WordPress block delimiters allowed.
 
 **Write each file immediately.** First create directories, then write files:
@@ -317,7 +318,17 @@ Based on user response, offer:
 1. **Iterate**: Modify specific theme files using the Write tool to overwrite them directly (no re-activation needed for file changes; re-activate only if the theme slug changes)
 2. **Share**: Create a shareable preview link via `studio preview create --path <site-path>` (Bash)
 3. **Add patterns**: Generate new pattern files and write them using the Write tool
-4. **Add pages**: Create WordPress pages via `studio wp --path <site-path> post create --post_type=page --post_title="<title>" --post_content="<block content>" --post_status=publish` (Bash)
+4. **Add pages** (two-step to avoid shell escaping issues):
+   1. Create the page (empty):
+      ```bash
+      PAGE_ID=$(studio wp --path <site-path> post create --post_type=page --post_title="<title>" --post_name="<slug>" --post_status=publish --porcelain)
+      ```
+   2. Update with content separately:
+      ```bash
+      CONTENT=$(cat <page-file>)
+      studio wp --path <site-path> post update $PAGE_ID --post_content="$CONTENT"
+      ```
+   Do NOT use `--post_content="$(cat file.html)"` in the create command — it breaks on special characters.
 5. **Regenerate designs**: Use `/preview-designs` to explore new directions
 
 ## Notes

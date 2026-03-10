@@ -1,10 +1,10 @@
-# PR Summary: Screenshot Verification & Design Quality Improvements
+# PR Summary: Screenshot Verification, Design Quality & Workflow Reliability Improvements
 
 **Branch:** `my-improvements` → `trunk`
 
 ## Overview
 
-This PR adds automated screenshot verification throughout the design workflow and elevates design quality through more specific CSS guidance.
+This PR adds automated screenshot verification throughout the design workflow, elevates design quality through more specific CSS guidance, and integrates 12 reliability and UX improvements discovered during real-world usage of the plugin.
 
 ---
 
@@ -48,8 +48,44 @@ This PR adds automated screenshot verification throughout the design workflow an
 
 ---
 
+### Workflow Reliability Improvements (from IMPROVEMENTS.md)
+
+**Screenshot Tool (`scripts/screenshot.mjs`)**
+- Auto-installs `puppeteer-core` on first run if missing (dynamic import with `npm install` fallback)
+- Detects WordPress proxy routes (`?design-asset=`, `?design-gallery`) and uses `domcontentloaded` wait strategy with 90s timeout instead of `networkidle2` (which times out on large HTML through WP proxy)
+- New `--dev-server=URL` flag to rewrite proxy URLs to a local dev server for faster screenshots
+
+**Phase 4 UX (`commands/design-site.md`)**
+- Asset path resolution: copies logos/images from `design/` to site root so absolute paths resolve correctly in gallery iframe
+- Dual preview mode: after mockup QA, starts a static dev server (`python3 -m http.server 8888`) alongside the gallery, giving instant page review without WordPress PHP overhead
+
+**New Phase 4.5: Content Extraction (`commands/design-site.md`)**
+- Inserts a content extraction step between Phase 4 (mockups) and Phase 5 (build)
+- Spawns parallel agents to extract all text content from approved HTML mockups into structured JSON files (`design/content/{slug}.json`) — character-for-character
+- Build agent uses these JSON files as source of truth instead of re-reading large HTML, preventing content rewriting/paraphrasing
+
+**Phase 5 Build Reliability (`commands/design-site.md`, `commands/quick-build.md`)**
+- Slug conflict resolution: checks for existing pages with conflicting slugs and trashes them before creating new pages (prevents `/portfolio-2` suffixes on redesign sites)
+- WP-CLI content import fix: two-step create-then-update pattern instead of `--post_content="$(cat ...)"` which breaks on special characters
+- Old theme plugin deactivation: deactivates `fusion-builder`, `fusion-core`, `revslider`, `js_composer`, `jetpack`, `jetpack-starter` after theme activation to prevent competing CSS/JS
+- Link color override: documents and adds CSS overrides for WordPress `theme.json` global link color specificity issue affecting footer/dark section links
+- Scroll animation background fix: sections with `has-background` keep `opacity: 1` on the wrapper and animate children instead (prevents jarring background fade-in)
+
+**Block Markup Policy (`references/wordpress-block-theming.md`, `commands/design-site.md`, `commands/quick-build.md`)**
+- Replaced absolute "NO HTML BLOCKS" rule with graduated policy: prefer core blocks always, allow `<!-- wp:html -->` as a documented last resort for patterns genuinely impossible with core blocks, never for elements with direct core block equivalents
+
+**Gallery Hook (`templates/design-gallery.php`)**
+- Verified mu-plugin correctly uses `init` hook (not `template_redirect`) — no change needed
+
+---
+
 ## Test Plan
-- [ ] Run `node scripts/screenshot.mjs <url> <output-path>` to verify screenshot utility works with the local Chrome binary
+- [ ] Run `node scripts/screenshot.mjs <url> <output-path>` to verify auto-install and screenshot capture
+- [ ] Run `node scripts/screenshot.mjs <wp-proxy-url> out.png` to confirm `domcontentloaded` strategy on proxy routes
+- [ ] Run `node scripts/screenshot.mjs <wp-proxy-url> out.png --dev-server=http://localhost:8888` to confirm URL rewriting
 - [ ] Run a full `design-site` workflow and confirm `design/verification/` directory is created and populated at each phase
+- [ ] Confirm Phase 4.5 produces `design/content/*.json` files with accurate extracted content
 - [ ] Confirm Phase 5 fidelity check produces comparison screenshots
+- [ ] On a redesign site, verify old pages are trashed before new page creation (no slug suffixes)
 - [ ] Verify `transition: all` hard rule appears in design system output from subagents
+- [ ] Verify footer links render correctly when `theme.json` sets a global link color
