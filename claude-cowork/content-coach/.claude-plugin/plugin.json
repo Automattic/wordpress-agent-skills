@@ -1,0 +1,8 @@
+{
+  "name": "content-coach-cowork",
+  "version": "0.1.0",
+  "description": "AI-powered content reviewer that analyzes WordPress posts across four pillars — readability, search visibility, content guidelines, and media accessibility — and delivers actionable feedback as block notes directly in the editor.",
+  "author": {
+    "name": "Automattic"
+  }
+}
