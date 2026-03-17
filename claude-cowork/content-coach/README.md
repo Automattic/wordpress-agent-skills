@@ -14,12 +14,6 @@ An AI-powered content reviewer that analyzes WordPress posts and delivers action
 1. Upload the plugin ZIP via **Settings > Plugins**, or install from the marketplace.
 2. Ensure `wpcom-mcp-content-authoring` is enabled in your MCP settings.
 
-### Claude Code
-
-```bash
-claude --plugin-dir ./claude-cowork/content-coach
-```
-
 ## Usage
 
 ```
