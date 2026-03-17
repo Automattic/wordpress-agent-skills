@@ -1,6 +1,6 @@
 ---
 description: Review a WordPress post and leave actionable feedback as block notes
-argument-hint: "<post ID>"
+argument-hint: "<post ID> [site URL]"
 ---
 
 # Review Content
@@ -11,9 +11,17 @@ Review a WordPress post across four quality pillars and deliver feedback as bloc
 
 ## Trigger
 
-User runs `/review-content` with a post ID, or asks to review/coach/check a WordPress post.
+User runs `/review-content` with a post ID (and optionally a site URL), or asks to review/coach/check a WordPress post.
 
 ## Workflow
+
+### Step 0: Resolve the Site
+
+Every MCP call requires a `wpcom_site` parameter. Determine the site using the first match:
+
+1. **Provided in the command** — e.g. `/review-content 123 mysite.wordpress.com`
+2. **Known from conversation context** — the user mentioned or used a site earlier
+3. **Ask the user** — if neither of the above, ask which site the post belongs to
 
 ### Step 1: Fetch Content and Notes
 
