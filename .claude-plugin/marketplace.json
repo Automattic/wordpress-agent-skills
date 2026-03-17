@@ -41,7 +41,7 @@
       "tags": ["wordpress", "content", "review", "accessibility", "seo", "block-notes"]
     },
     {
-      "name": "content-coach",
+      "name": "content-coach-cowork",
       "source": "./claude-cowork/content-coach",
       "description": "AI-powered content reviewer that analyzes WordPress posts across four pillars and delivers actionable feedback as block notes directly in the editor.",
       "version": "0.1.0",
