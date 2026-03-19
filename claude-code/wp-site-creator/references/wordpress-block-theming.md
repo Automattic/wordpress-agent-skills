@@ -9,12 +9,7 @@ Comprehensive knowledge for building WordPress block themes using Full Site Edit
 
 ## Absolute Rules
 
-- **PREFER CORE BLOCKS**: Always attempt to reproduce designs using core blocks (`wp:group`, `wp:columns`, `wp:cover`, `wp:image`, `wp:heading`, `wp:paragraph`, `wp:buttons`, etc.) with `className` attributes and CSS. This is the default and strongly preferred approach.
-- **LAST-RESORT HTML BLOCKS**: If a specific UI pattern is genuinely impossible to achieve with core blocks alone (e.g., card grids with overlay badges and pseudo-element gradients, complex flex layouts with mixed button styles, portfolio headers with flex-row title/button alignment), you may use `<!-- wp:html -->` as a last resort. Before using an HTML block, you must:
-  1. Document which core block combination you attempted and why it failed
-  2. Keep the HTML block as small as possible — wrap only the irreducible pattern, not an entire section
-  3. Never use HTML blocks for content that benefits from block-editor editing (headings, paragraphs, images)
-- **NEVER use HTML blocks for**: headings, paragraphs, buttons, images, or any single element that has a direct core block equivalent.
+- **NO HTML BLOCKS**: Never use `<!-- wp:html -->` (the `core/html` block). HTML blocks are opaque blobs in the block editor — users cannot select, style, or rearrange individual elements inside them. Every piece of content MUST use a proper core block (`wp:group`, `wp:heading`, `wp:paragraph`, `wp:columns`, etc.). If you find yourself reaching for `wp:html`, stop and decompose the content into the correct core blocks with `className` attributes and CSS instead.
 - **NO DECORATIVE HTML COMMENTS**: Never insert non-block HTML comments like `<!-- Hero Section -->` or `<!-- Features -->` in templates, template parts, or patterns. The only HTML comments allowed are WordPress block delimiters (`<!-- wp:block-name -->` / `<!-- /wp:block-name -->`).
 
 ## Theme Architecture

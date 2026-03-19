@@ -250,7 +250,7 @@ Use the site spec to choose the best section mix — the table is a guide, not a
 - Add equal-cards CSS for card layouts
 - **Link color override caution:** When `theme.json` sets a global link color, it overrides custom link colors in footers and dark sections. Include scoped anchor resets in `style.css` for sections with custom link styling (e.g., `.site-footer a { color: inherit; text-decoration: none; }`). Use `!important` for footer and dark-section link colors to beat WordPress global link color specificity.
 - NO EMOJIS in any content
-- **Block markup policy:** PREFER core blocks for all content (`wp:group`, `wp:columns`, `wp:cover`, `wp:heading`, `wp:paragraph`, `wp:buttons`, etc.) with `className` attributes and CSS. Use `<!-- wp:html -->` only as a last resort for UI patterns genuinely impossible with core blocks (e.g., card grids with overlay badges, complex flex layouts with mixed button styles). Never use HTML blocks for headings, paragraphs, buttons, images, or any element with a direct core block equivalent. Before using an HTML block, document what core block approach was attempted and why it failed. Keep HTML blocks as small as possible — wrap only the irreducible pattern.
+- **NO HTML BLOCKS** (`<!-- wp:html -->`): Every element must use a proper core block.
 - **No decorative HTML comments**: Only WordPress block delimiters allowed.
 
 **Write each file immediately.** First create directories, then write files:
