@@ -220,8 +220,9 @@ var PHASES = [
   { key: "inspiration", label: "Inspiration", num: 1 },
   { key: "styles", label: "Style Exploration", num: 2 },
   { key: "pages", label: "Page Design", num: 3 },
-  { key: "approved", label: "Full Site Mockup", num: 4 },
-  { key: "theme", label: "WordPress Site", num: 5 }
+  { key: "review", label: "Mockup Review", num: 4 },
+  { key: "approved", label: "Approved Mockups", num: 5 },
+  { key: "theme", label: "WordPress Site", num: 6 }
 ];
 
 // Track what's currently displayed in the iframe.
