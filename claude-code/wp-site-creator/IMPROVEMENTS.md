@@ -2,6 +2,26 @@
 
 Observations from real usage of the design-site workflow.
 
+## Completed Improvements
+
+### Gallery: Phase key mismatch fix (review → drafts)
+
+The gallery PHASES array used `review` as the phase 4 key, but `gallery.json` stored artifacts under `drafts`. `renderSidebar()` looked for `artifacts.review` (empty) and draft mockups never appeared in the sidebar. Fixed by aligning the PHASES key to `drafts` across the gallery plugin, workflow, and reference docs.
+
+### Gallery: Approved artifacts visible during drafts phase
+
+The sidebar only rendered artifacts for phases with status `done` or `current`. When `phase` was `drafts`, the `approved` phase had status `future` — hiding any approved artifacts. Fixed by adding an exception so `approved` always shows its artifacts when they exist, supporting incremental approval during mockup review.
+
+### Gallery: Tokens schema in orchestrator prompt
+
+The Phase 2 token locking step said "add `tokens` object" without specifying the schema the gallery sidebar expects. Orchestrators wrote minimal pointers instead of the full `colors`/`typography`/`spacing`/`motion` structure, so the sidebar's color bar, font names, and density/motion pills rendered empty. Fixed by adding the exact gallery schema inline in the locking step.
+
+### Screenshots: Phase-organized verification subfolders
+
+Screenshots were dumped into a flat `verification/` directory with phase-prefixed filenames, accumulating dozens of images across the workflow. Reorganized into phase-specific subfolders (`style-exploration/`, `page-design/`, `mockup-review/`, `approved/`, `wordpress-build/`) and added cleanup prompts after Phase 4 approval and Phase 5 fidelity check.
+
+---
+
 ## Phase 4: Dual Preview Mode
 
 After generating approved mockups, serve **both** preview options:

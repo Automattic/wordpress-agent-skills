@@ -51,6 +51,13 @@ All design outputs live inside the Studio site at `<site-path>/design/`. Theme f
 │   ├── about.html
 │   └── ...
 │
+├── verification/                # QA screenshots (organized by phase)
+│   ├── style-exploration/
+│   ├── page-design/
+│   ├── mockup-review/
+│   ├── approved/
+│   └── wordpress-build/
+│
 ├── design-tokens.json
 ├── design-patterns.html
 ├── design-package.json

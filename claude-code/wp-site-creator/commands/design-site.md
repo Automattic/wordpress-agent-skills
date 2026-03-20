@@ -211,7 +211,7 @@ Present as a compact numbered list — 3-4 lines per direction. Then say: "Gener
 
 After direction approval, execute IN PARALLEL:
 
-**A. Scaffold Gallery** (orchestrator): Create dirs (`mkdir -p <site-path>/design/{import,inspiration/screenshots,styles,pages,drafts,approved,verification}`). **Read `${CLAUDE_PLUGIN_ROOT}/references/gallery.md` first** for the full schema, then write `gallery.json` with initial data (project, brief, phase, startedAt, siteUrl, empty artifacts). Open gallery: `open "http://<site-url>/?design-gallery"`. Say: "Design gallery is open — it auto-refreshes as I add designs."
+**A. Scaffold Gallery** (orchestrator): Create dirs (`mkdir -p <site-path>/design/{import,inspiration/screenshots,styles,pages,drafts,approved,verification/{style-exploration,page-design,mockup-review,approved,wordpress-build}}`). **Read `${CLAUDE_PLUGIN_ROOT}/references/gallery.md` first** for the full schema, then write `gallery.json` with initial data (project, brief, phase, startedAt, siteUrl, empty artifacts). Open gallery: `open "http://<site-url>/?design-gallery"`. Say: "Design gallery is open — it auto-refreshes as I add designs."
 
 **B. Spawn 3 Tile Subagents** (parallel Task() calls, one per direction):
 
@@ -233,7 +233,7 @@ This costs almost zero context (1 line per read) and ensures subagents inherit r
 
 1. For each tile HTML file, screenshot via the gallery asset route:
    ```bash
-   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=styles/v[N]-tile[X].html" "<site-path>/design/verification/phase2-tile[X]-v1.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=styles/v[N]-tile[X].html" "<site-path>/design/verification/style-exploration/tile[X]-v1.png"
    ```
 2. Read each screenshot with the Read tool (Claude can see images). Evaluate against:
    - Google Fonts loaded correctly (not falling back to system fonts)
@@ -336,8 +336,8 @@ Write(<site-path>/design/pages/.warm, "")
 
 1. For each layout HTML file, screenshot at desktop and mobile widths:
    ```bash
-   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=pages/v[N]-layout[X].html" "<site-path>/design/verification/phase3-layout[X]-v1.png"
-   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=pages/v[N]-layout[X].html" "<site-path>/design/verification/phase3-layout[X]-v1-mobile.png" 375
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=pages/v[N]-layout[X].html" "<site-path>/design/verification/page-design/layout[X]-v1.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=pages/v[N]-layout[X].html" "<site-path>/design/verification/page-design/layout[X]-v1-mobile.png" 375
    ```
 2. Read each screenshot. Evaluate against:
    - Section spacing and visual rhythm
@@ -406,7 +406,7 @@ Write(<site-path>/design/drafts/.warm, "")
 
 1. For each draft page, screenshot via the gallery asset route:
    ```bash
-   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=drafts/[slug].html" "<site-path>/design/verification/phase4-[slug]-v1.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=drafts/[slug].html" "<site-path>/design/verification/mockup-review/[slug]-v1.png"
    ```
 2. Read each screenshot. Evaluate against:
    - Cross-page consistency (header, footer, nav, typography, colors)
@@ -469,7 +469,7 @@ On user approval:
    - Populate `artifacts.approved` with the final page files (paths in `approved/`, not `drafts/`)
 3. Re-screenshot from `approved/` folder — these are the "approved specification" that Phase 5 must match:
    ```bash
-   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=approved/[slug].html" "<site-path>/design/verification/phase4-[slug]-approved.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=approved/[slug].html" "<site-path>/design/verification/approved/[slug].png"
    ```
 4. Kill and restart the dev server to serve from `approved/`:
    ```bash
@@ -478,7 +478,16 @@ On user approval:
    DEV_SERVER_PID=$!
    ```
 
-Say: "Mockups approved — [N] pages locked in. Moving to content extraction."
+Ask: "Mockups approved — [N] pages locked in. Would you like me to clean up the QA screenshots from earlier phases (style exploration, page design, mockup review)? The approved screenshots are kept for the WordPress build fidelity check."
+
+If yes:
+```bash
+rm -rf {{site-path}}/design/verification/style-exploration
+rm -rf {{site-path}}/design/verification/page-design
+rm -rf {{site-path}}/design/verification/mockup-review
+```
+
+Then say: "Moving to content extraction."
 
 **Output:** Approved HTML mockups in `<site-path>/design/approved/`.
 
@@ -539,7 +548,7 @@ After mockup approval, every design decision is captured in files on disk:
 - `<site-path>/design/design-tokens.json`
 - `<site-path>/design/design-patterns.html`
 - Approved HTML mockups in `<site-path>/design/approved/`
-- Approved mockup screenshots in `<site-path>/design/verification/` (phase4-*.png — used for Phase 5 fidelity comparison)
+- Approved mockup screenshots in `<site-path>/design/verification/approved/` (used for Phase 5 fidelity comparison)
 - `<site-path>/design/gallery.json`
 
 Collect these variables for the final handoff:
@@ -662,11 +671,11 @@ Write(<site-path>/wp-content/themes/<theme-slug>/.warm, "")
 
 1. For each page, screenshot the live WordPress site:
    ```bash
-   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "<site-url>/<page-slug>/" "<site-path>/design/verification/phase5-[slug]-v1.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "<site-url>/<page-slug>/" "<site-path>/design/verification/wordpress-build/[slug]-v1.png"
    ```
    For the homepage, use the site URL directly (no slug).
 
-2. Read each Phase 5 screenshot alongside its Phase 4 counterpart (`phase4-[slug]-v1.png`). This is a fidelity comparison — identify mismatches:
+2. Read each Phase 5 screenshot alongside its Phase 4 counterpart (`verification/approved/[slug].png`). This is a fidelity comparison — identify mismatches:
    - Spacing differences (padding, margins, section gaps)
    - Color mismatches (background colors, text colors, accent usage)
    - Typography differences (font weight, size, letter-spacing)
@@ -678,6 +687,13 @@ Write(<site-path>/wp-content/themes/<theme-slug>/.warm, "")
 4. Perform at least 2 comparison rounds. Stop when no visible differences remain or the user says done.
 
 5. Save final Phase 5 screenshots for the record.
+
+Ask: "Would you like me to clean up the verification screenshots? They're no longer needed now that the site is built."
+
+If yes:
+```bash
+rm -rf {{site-path}}/design/verification
+```
 
 Then: Update `gallery.json` — set `phase` to `theme`, add theme slug to `themeSlugs`.
 
