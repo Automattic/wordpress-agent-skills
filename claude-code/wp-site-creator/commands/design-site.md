@@ -406,7 +406,7 @@ cp {{site-path}}/design/*.svg {{site-path}}/ 2>/dev/null || true
 
 ### Present Drafts for User Review
 
-After internal QA passes, update `gallery.json` — set `phase` to `review`, add draft page files to `artifacts.drafts`. Each entry MUST include a descriptive `label` (the page name, e.g., "Homepage", "About") — never a generic name.
+After internal QA passes, update `gallery.json` — set `phase` to `drafts`, add draft page files to `artifacts.drafts`. Each entry MUST include a descriptive `label` (the page name, e.g., "Homepage", "About") — never a generic name.
 
 Start a dev server for fast preview:
 ```bash
@@ -697,9 +697,9 @@ The orchestrator owns gallery state. Subagents NEVER write to `gallery.json`.
 ## Phase Regression
 
 - **Phase 3 -> 2:** New tiles as `v[next]`. Phase to `"styles"`. New lock overwrites tokens.
-- **Phase 4 (review) -> 3:** Re-read tokens, new layouts as `v[next]`. Phase to `"pages"`.
-- **Phase 4 (approved) -> 4 (review):** Return to drafts for further iteration. Phase to `"review"`.
-- **Phase 5 -> 4:** Return to mockup iteration. Phase to `"review"`. Re-run promotion + Phase 5 when done.
+- **Phase 4 (drafts) -> 3:** Re-read tokens, new layouts as `v[next]`. Phase to `"pages"`.
+- **Phase 4 (approved) -> 4 (drafts):** Return to drafts for further iteration. Phase to `"drafts"`.
+- **Phase 5 -> 4:** Return to mockup iteration. Phase to `"drafts"`. Re-run promotion + Phase 5 when done.
 - Always increment versions. Never overwrite.
 
 ## Follow-up Actions

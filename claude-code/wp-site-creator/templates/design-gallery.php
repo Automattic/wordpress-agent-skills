@@ -220,7 +220,7 @@ var PHASES = [
   { key: "inspiration", label: "Inspiration", num: 1 },
   { key: "styles", label: "Style Exploration", num: 2 },
   { key: "pages", label: "Page Design", num: 3 },
-  { key: "review", label: "Mockup Review", num: 4 },
+  { key: "drafts", label: "Mockup Review", num: 4 },
   { key: "approved", label: "Approved Mockups", num: 5 },
   { key: "theme", label: "WordPress Site", num: 6 }
 ];

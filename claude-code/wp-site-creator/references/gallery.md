@@ -122,7 +122,7 @@ Written by the orchestrator during gallery scaffolding. Updated as phases progre
 |-------|------|-------------|
 | `project` | string | Site name from the brief |
 | `brief` | string | One-line site description |
-| `phase` | string | Current phase: `inspiration`, `styles`, `pages`, `review`, `approved`, `theme` |
+| `phase` | string | Current phase: `inspiration`, `styles`, `pages`, `drafts`, `approved`, `theme` |
 | `startedAt` | string | ISO 8601 timestamp |
 | `siteUrl` | string | Studio site URL (from `studio site status`) |
 | `references` | array | URL references from Phase 1 (empty array if none) |
@@ -175,7 +175,7 @@ The orchestrator owns gallery state. Subagents NEVER touch `gallery.json`.
 
 **Phase 3** — Subagent writes layout HTML files. Orchestrator updates `gallery.json` artifacts.
 
-**Phase 4 (drafts)** — Subagent writes draft page HTML files to `drafts/`. Orchestrator updates `gallery.json`: set `phase` to `review`, add files to `artifacts.drafts`. User reviews and iterates.
+**Phase 4 (drafts)** — Subagent writes draft page HTML files to `drafts/`. Orchestrator updates `gallery.json`: set `phase` to `drafts`, add files to `artifacts.drafts`. User reviews and iterates.
 
 **Phase 4 (approval)** — User approves drafts. Orchestrator copies final versions from `drafts/` to `approved/`, updates `gallery.json`: set `phase` to `approved`, populates `artifacts.approved`.
 
