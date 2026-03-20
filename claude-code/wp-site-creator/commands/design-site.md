@@ -264,7 +264,27 @@ Read(${CLAUDE_PLUGIN_ROOT}/references/design-system-phase2.md, limit=1)
 Write(<site-path>/design/.warm, "")
 ```
 
-Run WCAG contrast verification. Write to `<site-path>/design/design-tokens.json` AND `<site-path>/design/design-patterns.html`. Update `gallery.json` — set `phase` to `pages`, add `tokens` object. Confirm with summary.
+Run WCAG contrast verification. Write to `<site-path>/design/design-tokens.json` AND `<site-path>/design/design-patterns.html`. Update `gallery.json` — set `phase` to `pages`, add `tokens` object matching the gallery schema (extract values from `design-tokens.json`):
+
+```json
+{
+  "colors": {
+    "primary": "#hex",
+    "secondary": "#hex",
+    "accent": "#hex",
+    "light": { "background": "#hex", "surface": "#hex" },
+    "dark": { "background": "#hex", "surface": "#hex" }
+  },
+  "typography": {
+    "heading": { "family": "Font Name" },
+    "body": { "family": "Font Name" }
+  },
+  "spacing": { "density": "comfortable|compact|spacious" },
+  "motion": { "level": "none|subtle|moderate|expressive" }
+}
+```
+
+This powers the gallery sidebar's color bar, font names, and density/motion pills. Confirm with summary.
 
 **Output:** `<site-path>/design/design-tokens.json`, `<site-path>/design/design-patterns.html`
 

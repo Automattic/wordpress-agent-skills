@@ -253,7 +253,7 @@ function renderSidebar() {
       + '<span>' + p.label + '</span>'
       + '</button>';
 
-    if ((status === "done" || status === "current") && artifacts.length && p.key !== "inspiration" && p.key !== "theme") {
+    if ((status === "done" || status === "current" || (p.key === "approved" && artifacts.length)) && artifacts.length && p.key !== "inspiration" && p.key !== "theme") {
       html += '<ul class="artifact-list">';
       for (var j = 0; j < artifacts.length; j++) {
         var a = artifacts[j];
