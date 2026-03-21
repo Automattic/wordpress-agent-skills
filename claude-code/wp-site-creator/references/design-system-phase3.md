@@ -125,6 +125,38 @@ When images are present, unify them with the brand palette using layered CSS tre
 
 This tints images with the brand's primary color via a gradient overlay and `mix-blend-mode: multiply`, keeping them visually cohesive with the palette. Adjust the gradient angle, color, and opacity per section. For darker, moodier treatments, increase opacity or layer a second overlay with `mix-blend-mode: color`.
 
+### Image Placeholder Zones
+
+When an image is not yet available, render a **visible placeholder zone** — not a tiny caption. The placeholder must occupy the full space the final image would and clearly communicate what belongs there.
+
+```css
+.image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 300px;
+  background: linear-gradient(135deg, var(--wp--preset--color--primary) 0%, var(--wp--preset--color--secondary) 100%);
+  opacity: 0.85;
+  padding: 2rem;
+}
+.image-placeholder span {
+  font-family: var(--wp--preset--font-family--heading);
+  font-size: clamp(1.5rem, 4vw, 3rem);
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+```
+
+**Rules:**
+- Label text must be **large and prominent** — readable at any zoom level, filling the zone
+- Use a **brand-tinted gradient background** from the token palette, not a flat gray
+- Keep labels short and descriptive: "Completed Project Interior", "Team Photo", "Product Hero" — not "Hero Image -- Completed Project Interior or Aerial Drone Shot"
+- The placeholder must give an accurate sense of the space the final image will occupy
+
 ### Topic Fit Litmus Test
 
 A viewer should be able to guess what the site is about from the layout and visual treatment alone. If the page could belong to any random site, the composition is too generic — rework it.
