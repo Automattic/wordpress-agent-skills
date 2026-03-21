@@ -448,7 +448,15 @@ The user reviews the drafts and provides feedback. This loop continues until the
 On user feedback (change requests):
 1. Spawn a fix-up subagent with the user's feedback + relevant screenshot + design references.
 2. Write updated file as `drafts/[slug]-v[N].html` (never overwrite — always increment version).
-3. Update `gallery.json` — add new version to `artifacts.drafts` with descriptive `label`.
+3. **Append** the new version to `artifacts.drafts` in `gallery.json` — do NOT replace the original entry. Both must exist so the gallery shows the version history. Example — if `artifacts.drafts` currently has:
+   ```json
+   { "file": "drafts/services.html", "version": 1, "label": "Services — Three Pillars + Accordions", "colors": [...] }
+   ```
+   After creating `services-v2.html`, **append** a new entry (keep the original):
+   ```json
+   { "file": "drafts/services-v2.html", "version": 2, "label": "Services — V2: Revised Hero + Card Layout", "colors": [...] }
+   ```
+   The gallery groups versions by base slug and shows them as a collapsible version history under the page name.
 4. Re-screenshot and re-run internal QA on updated pages.
 5. Re-present to user: "Updated [page(s)] — take another look."
 6. Repeat until user says "approved."
@@ -467,6 +475,7 @@ On user approval:
 2. Update `gallery.json`:
    - Set `phase` to `approved`
    - Populate `artifacts.approved` with the final page files (paths in `approved/`, not `drafts/`)
+   - **Remove** all entries for the approved slug(s) from `artifacts.drafts` — version history is no longer needed once a page is promoted. If all drafts are approved, `artifacts.drafts` should be an empty array `[]`.
 3. Re-screenshot from `approved/` folder — these are the "approved specification" that Phase 5 must match:
    ```bash
    node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=approved/[slug].html" "<site-path>/design/verification/approved/[slug].png"

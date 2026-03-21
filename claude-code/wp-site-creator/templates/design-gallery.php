@@ -134,6 +134,19 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#222
 .artifact-link .dots{display:flex;gap:3px}
 .dot{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.08);display:inline-block;flex-shrink:0}
 
+/* Version group (drafts phase) */
+.version-group-label{font-size:12px;font-weight:600;color:#555;padding:6px 0 2px;margin:0}
+.version-list{padding:0 0 2px 14px;list-style:none}
+.version-list li{margin:0}
+.version-link{
+  display:flex;align-items:center;gap:6px;padding:2px 12px 2px 0;
+  font-size:11px;color:#999;cursor:pointer;
+  border:none;background:none;font:inherit;width:100%;text-align:left;
+  transition:color .12s;
+}
+.version-link:hover{color:#222}
+.version-link.active{color:#3858e9;font-weight:600}
+
 /* Tokens card in sidebar */
 .sb-tokens{
   margin:8px 12px 16px;padding:14px;background:#fff;
@@ -255,14 +268,67 @@ function renderSidebar() {
 
     if ((status === "done" || status === "current" || (p.key === "approved" && artifacts.length)) && artifacts.length && p.key !== "inspiration" && p.key !== "theme") {
       html += '<ul class="artifact-list">';
-      for (var j = 0; j < artifacts.length; j++) {
-        var a = artifacts[j];
-        var isActive = activePhase === p.key && activeFile === a.file;
-        html += '<li><button class="artifact-link' + (isActive ? ' active' : '') + '" data-phase="' + p.key + '" data-file="' + a.file + '" onclick="selectArtifact(\'' + p.key + '\',\'' + a.file + '\')">'
-          + esc(a.label || ('v' + a.version))
-          + '<span class="dots">' + dots(a.colors || []) + '</span>'
-          + '</button></li>';
+
+      // Drafts phase: group artifacts by base slug to show version history
+      if (p.key === "drafts") {
+        var groups = [];
+        var groupMap = {};
+        for (var j = 0; j < artifacts.length; j++) {
+          var a = artifacts[j];
+          // Extract base slug: "drafts/homepage-v2.html" → "homepage", "drafts/homepage.html" → "homepage"
+          var fname = (a.file || "").replace(/^drafts\//, "").replace(/\.html$/, "");
+          var base = fname.replace(/-v\d+$/, "");
+          if (!groupMap[base]) { groupMap[base] = []; groups.push(base); }
+          groupMap[base].push(a);
+        }
+        for (var g = 0; g < groups.length; g++) {
+          var base = groups[g];
+          var items = groupMap[base];
+          if (items.length === 1) {
+            // Single version — render flat (no version sub-list)
+            var a = items[0];
+            var isActive = activePhase === p.key && activeFile === a.file;
+            html += '<li><button class="artifact-link' + (isActive ? ' active' : '') + '" data-phase="' + p.key + '" data-file="' + a.file + '" onclick="selectArtifact(\'' + p.key + '\',\'' + a.file + '\')">'
+              + esc(a.label || ('v' + a.version))
+              + '<span class="dots">' + dots(a.colors || []) + '</span>'
+              + '</button></li>';
+          } else {
+            // Multiple versions — render parent label + version sub-list
+            // Extract clean page name from first item's label: "Services — Three Pillars + Accordions" → "Services"
+            var parentLabel = items[0].label || base.replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+            parentLabel = parentLabel.replace(/\s*[-—:].+$/, '');
+            html += '<li><p class="version-group-label">' + esc(parentLabel) + '</p>';
+            html += '<ul class="version-list">';
+            for (var v = 0; v < items.length; v++) {
+              var a = items[v];
+              var isActive = activePhase === p.key && activeFile === a.file;
+              // Extract description after the page name separator (— or :)
+              var fullLabel = a.label || '';
+              var desc = fullLabel.replace(/^[^—:]+[—:]\s*/, '');
+              // Strip leading "V2: " or "V2 — " prefix from desc if present
+              desc = desc.replace(/^V\d+\s*[-—:]\s*/i, '');
+              var vTag = (v === 0) ? 'v1' : 'v' + (v + 1);
+              var vLabel = desc ? (vTag + ' — ' + desc) : vTag;
+              html += '<li><button class="version-link' + (isActive ? ' active' : '') + '" data-phase="' + p.key + '" data-file="' + a.file + '" onclick="selectArtifact(\'' + p.key + '\',\'' + a.file + '\')">'
+                + esc(vLabel)
+                + '<span class="dots">' + dots(a.colors || []) + '</span>'
+                + '</button></li>';
+            }
+            html += '</ul></li>';
+          }
+        }
+      } else {
+        // Non-drafts phases: flat list (unchanged)
+        for (var j = 0; j < artifacts.length; j++) {
+          var a = artifacts[j];
+          var isActive = activePhase === p.key && activeFile === a.file;
+          html += '<li><button class="artifact-link' + (isActive ? ' active' : '') + '" data-phase="' + p.key + '" data-file="' + a.file + '" onclick="selectArtifact(\'' + p.key + '\',\'' + a.file + '\')">'
+            + esc(a.label || ('v' + a.version))
+            + '<span class="dots">' + dots(a.colors || []) + '</span>'
+            + '</button></li>';
+        }
       }
+
       html += '</ul>';
     }
     html += '</div>';
@@ -312,7 +378,7 @@ function selectArtifact(phase, file) {
   activeFile = file;
 
   // Update active states in sidebar.
-  document.querySelectorAll('.artifact-link').forEach(function(el) {
+  document.querySelectorAll('.artifact-link, .version-link').forEach(function(el) {
     el.classList.toggle('active', el.getAttribute('data-phase') === phase && el.getAttribute('data-file') === file);
   });
 
