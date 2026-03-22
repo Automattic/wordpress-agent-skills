@@ -307,7 +307,8 @@ function renderSidebar() {
               var desc = fullLabel.replace(/^[^—:]+[—:]\s*/, '');
               // Strip leading "V2: " or "V2 — " prefix from desc if present
               desc = desc.replace(/^V\d+\s*[-—:]\s*/i, '');
-              var vTag = (v === 0) ? 'v1' : 'v' + (v + 1);
+              var vNum = a.version != null ? a.version : (v + 1);
+              var vTag = 'v' + vNum;
               var vLabel = desc ? (vTag + ' — ' + desc) : vTag;
               html += '<li><button class="version-link' + (isActive ? ' active' : '') + '" data-phase="' + p.key + '" data-file="' + a.file + '" onclick="selectArtifact(\'' + p.key + '\',\'' + a.file + '\')">'
                 + esc(vLabel)

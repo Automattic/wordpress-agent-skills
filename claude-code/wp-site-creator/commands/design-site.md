@@ -88,6 +88,21 @@ Store `<site-path>` for all subsequent phases. Use `STUDIO_HOME` and `<site-path
    ```
 10. **Get site URL:** `studio site status --path <site-path>` — store the URL as `<site-url>` for gallery access.
 
+11. **Verify WordPress is installed:** Check that WordPress is responding (not showing the install screen):
+    ```bash
+    curl -s -o /dev/null -w "%{http_code}" "http://<site-url>/?design-asset=gallery.json"
+    ```
+    If the response is `302` or the response body contains "Installation" or "language", WordPress needs to be installed:
+    ```bash
+    studio wp --path <site-path> core install --url="<site-url>" --title="<site-name>" --admin_user=admin --admin_password=admin --admin_email=admin@example.com --skip-email
+    ```
+    If the CLI install produces no output (known Studio CLI issue), fall back to HTTP POST:
+    ```bash
+    curl -s -X POST "<site-url>/wp-admin/install.php?step=2" \
+      -d "weblog_title=<url-encoded-site-name>&user_name=admin&admin_password=admin&admin_password2=admin&pw_weak=on&admin_email=admin%40example.com&language="
+    ```
+    This is especially important for multi-session projects where Studio may have been reset between sessions.
+
 ---
 
 ## Phase 0: New or Redesign?
@@ -446,46 +461,59 @@ Present both preview URLs and ask for feedback:
 The user reviews the drafts and provides feedback. This loop continues until the user explicitly approves.
 
 On user feedback (change requests):
-1. Spawn a fix-up subagent with the user's feedback + relevant screenshot + design references.
-2. Write updated file as `drafts/[slug]-v[N].html` (never overwrite — always increment version).
-3. **Append** the new version to `artifacts.drafts` in `gallery.json` — do NOT replace the original entry. Both must exist so the gallery shows the version history. Example — if `artifacts.drafts` currently has:
-   ```json
-   { "file": "drafts/services.html", "version": 1, "label": "Services — Three Pillars + Accordions", "colors": [...] }
-   ```
-   After creating `services-v2.html`, **append** a new entry (keep the original):
-   ```json
-   { "file": "drafts/services-v2.html", "version": 2, "label": "Services — V2: Revised Hero + Card Layout", "colors": [...] }
-   ```
-   The gallery groups versions by base slug and shows them as a collapsible version history under the page name.
-4. Re-screenshot and re-run internal QA on updated pages.
-5. Re-present to user: "Updated [page(s)] — take another look."
-6. Repeat until user says "approved."
+
+1. **Ask the user:** "Would you like me to update the current version (v[N]), or save this as a new version (v[N+1])?"
+
+2. **If update current version:**
+   - Spawn a fix-up subagent with the user's feedback + relevant screenshot + design references.
+   - Edit the existing file in place — no new file, no new gallery entry.
+   - Re-screenshot and re-run internal QA on the updated page.
+
+3. **If new version:**
+   - First, **copy** the current file to the new version filename:
+     ```bash
+     cp {{site-path}}/design/drafts/[slug].html {{site-path}}/design/drafts/[slug]-v[N+1].html
+     ```
+   - Then spawn a fix-up subagent to edit the **copy** (`drafts/[slug]-v[N+1].html`). Never edit the original — the Edit tool modifies in place, which would destroy the previous version.
+   - **Append** the new version to `artifacts.drafts` in `gallery.json` — do NOT replace the original entry. Both must exist so the gallery shows the version history. Example — if `artifacts.drafts` currently has:
+     ```json
+     { "file": "drafts/services.html", "version": 1, "label": "Services — Three Pillars + Accordions", "colors": [...] }
+     ```
+     After creating `services-v2.html`, **append** a new entry (keep the original):
+     ```json
+     { "file": "drafts/services-v2.html", "version": 2, "label": "Services — V2: Revised Hero + Card Layout", "colors": [...] }
+     ```
+     The gallery groups versions by base slug and shows them as a collapsible version history under the page name.
+   - Re-screenshot and re-run internal QA on the new version.
+
+4. Re-present to user: "Updated [page(s)] — take another look."
+5. Repeat until user says "approved."
 
 There is no max iteration limit for user-driven feedback. The user controls when drafts are approved.
 
 ### Promote Drafts to Approved
 
-On user approval:
+On user approval, complete **every step** in this checklist:
 
-1. Copy the final version of each page from `drafts/` → `approved/[slug].html` (clean slug, no version suffix):
-   ```bash
-   # For each page, copy the latest version (or the original if no iterations)
-   cp {{site-path}}/design/drafts/[latest-slug-file].html {{site-path}}/design/approved/[slug].html
-   ```
-2. Update `gallery.json`:
-   - Set `phase` to `approved`
-   - Populate `artifacts.approved` with the final page files (paths in `approved/`, not `drafts/`)
-   - **Remove** all entries for the approved slug(s) from `artifacts.drafts` — version history is no longer needed once a page is promoted. If all drafts are approved, `artifacts.drafts` should be an empty array `[]`.
-3. Re-screenshot from `approved/` folder — these are the "approved specification" that Phase 5 must match:
-   ```bash
-   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=approved/[slug].html" "<site-path>/design/verification/approved/[slug].png"
-   ```
-4. Kill and restart the dev server to serve from `approved/`:
-   ```bash
-   kill $DEV_SERVER_PID 2>/dev/null
-   python3 -m http.server 8888 --directory {{site-path}}/design/approved/ &
-   DEV_SERVER_PID=$!
-   ```
+- [ ] **1. Copy** the final version of each page from `drafts/` → `approved/[slug].html` (clean slug, no version suffix):
+  ```bash
+  # For each page, copy the latest version (or the original if no iterations)
+  cp {{site-path}}/design/drafts/[latest-slug-file].html {{site-path}}/design/approved/[slug].html
+  ```
+- [ ] **2. Add** entries to `artifacts.approved` in `gallery.json` with the final page files (paths in `approved/`, not `drafts/`)
+- [ ] **3. Remove** ALL version entries for the approved slug(s) from `artifacts.drafts` — version history is no longer needed once a page is promoted. If all drafts are approved, `artifacts.drafts` should be an empty array `[]`.
+- [ ] **4. Set** `phase` to `"approved"` in `gallery.json`
+- [ ] **5. Screenshot** each approved file for the verification record:
+  ```bash
+  node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=approved/[slug].html" "<site-path>/design/verification/approved/[slug].png"
+  ```
+- [ ] **6. Restart** the dev server to serve from `approved/`:
+  ```bash
+  kill $DEV_SERVER_PID 2>/dev/null
+  python3 -m http.server 8888 --directory {{site-path}}/design/approved/ &
+  DEV_SERVER_PID=$!
+  ```
+- [ ] **7. Confirm** approval to user with updated page count
 
 Ask: "Mockups approved — [N] pages locked in. Would you like me to clean up the QA screenshots from earlier phases (style exploration, page design, mockup review)? The approved screenshots are kept for the WordPress build fidelity check."
 
