@@ -14,31 +14,58 @@ Add a **draft → review → approved** pipeline to Phase 4, reusing the same re
 
 1. **Generate to `drafts/`** — The subagent writes page mockups to `design/drafts/` instead of `design/approved/`
 2. **Internal QA** — Automated screenshot QA runs against drafts (unchanged behavior, just different folder)
-3. **User review** — Gallery enters a new `"review"` phase, user sees drafts and provides feedback
-4. **Iteration loop** — Fix-up agents apply user feedback, write versioned files (`homepage-v2.html`, etc.), no max iteration limit
+3. **User review** — Gallery enters the `"drafts"` phase, user sees drafts and provides feedback
+4. **Iteration loop** — User chooses to edit current version or create a new version; fix-up agents apply feedback accordingly
 5. **Promotion** — On user approval, final versions are copied to `approved/` with clean slugs, gallery transitions to `"approved"` phase
 
 ### What changed
 
 | File | Change |
 |------|--------|
-| `commands/design-site.md` | Rewrote Phase 4 with drafts folder, review prompt, iteration loop, and promotion step. Updated directory scaffolding and phase regression rules. |
-| `templates/design-gallery.php` | Added `"review"` phase (with `"Mockup Review"` label) to the gallery PHASES array between Page Design and Approved Mockups. |
-| `references/gallery.md` | Documented `drafts/` directory, `"review"` phase, `artifacts.drafts` schema, and updated naming conventions. |
+| `commands/design-site.md` | Rewrote Phase 4 with drafts folder, review prompt, iteration loop, and promotion step. Updated directory scaffolding and phase regression rules. Added tokens schema to Phase 2 locking step. Added screenshot cleanup prompts after Phase 4 approval and Phase 5 fidelity check. Added edit-vs-new-version user prompt to iteration loop. Reformatted approval promotion as 7-step checklist. Added WordPress installation verification to Phase 0.5. |
+| `templates/design-gallery.php` | Changed phase 4 PHASES key to `"drafts"` (matching the `artifacts.drafts` key in `gallery.json`). Added exception so `approved` phase always shows artifacts regardless of current phase status. Fixed version label bug to read `artifact.version` field instead of array index. Added draft version grouping by base slug with collapsible version history. |
+| `references/gallery.md` | Documented `drafts/` directory, `artifacts.drafts` schema, updated naming conventions, added `verification/` subfolder structure. |
+| `IMPROVEMENTS.md` | Added summaries of completed improvements. |
 
 ### Design decisions
 
 - **Reuses existing patterns** — The review/iteration flow mirrors Phases 2 and 3 exactly (present in gallery → ask for feedback → iterate → lock)
 - **No max iteration limit** — Unlike the automated QA (max 2 rounds), user-driven feedback loops until the user says "approved"
+- **Edit vs new version** — During iteration, the user is asked whether to update the current version in place or create a new versioned file, keeping version history meaningful without clutter
 - **Clean promotion** — Approved files get clean slugs (no version suffix), so Phase 4.5 and Phase 5 are completely unaffected
-- **Gallery phase count goes from 5 → 6** — The new `review` phase sits between "Page Design" (3) and "Approved Mockups" (5), giving the user a clear visual signal that designs are in review
+- **Gallery phase count goes from 5 → 6** — The `drafts` phase sits between "Page Design" (3) and "Approved Mockups" (5), giving the user a clear visual signal that designs are in review
+- **Approved artifacts always visible** — The `approved` phase shows its artifacts in the sidebar even during the `drafts` phase, supporting incremental approval
+- **Phase-organized screenshots** — Verification screenshots go to subfolders (`style-exploration/`, `page-design/`, `mockup-review/`, `approved/`, `wordpress-build/`) instead of a flat directory, with cleanup prompts at natural workflow boundaries
+
+### Bug fixes included
+
+- **Gallery key mismatch** — The gallery PHASES key was `"review"` but `gallery.json` stored artifacts under `"drafts"`, so draft mockups never appeared in the sidebar. Aligned all references to use `"drafts"`.
+- **Tokens sidebar empty** — The Phase 2 locking step didn't specify the `tokens` schema the gallery expects, so the sidebar color bar, font names, and density/motion pills rendered blank. Added the exact schema inline.
+- **Gallery version labels** — Version labels used array index instead of the artifact's `version` field, causing labels to display in reverse when new versions were prepended. Fixed to read `artifact.version` with fallback.
+
+### Session 7 improvements
+
+- **Edit vs new version prompt** — Iteration loop now asks "update current version (vN) or save as new version (vN+1)?" so users can make minor edits without creating unnecessary version history.
+- **Approval checklist** — Promotion from drafts to approved reformatted as a 7-step checklist to prevent steps from being missed (gallery cleanup was skipped in session 7).
+- **WordPress installation check** — Phase 0.5 now verifies WordPress is installed after confirming Studio is running, with CLI and HTTP POST fallbacks for the known Studio CLI silent-failure issue.
+
+### Future improvement: Add tablet-width screenshots
+
+The screenshot workflow currently captures two viewport widths — desktop (1440px) and mobile (375px) — but skips tablet. Adding a tablet breakpoint (~768px or 1024px) would catch layout issues that fall between the two extremes: navigation collapse points, grid column reflows (3-col → 2-col), side-by-side sections that stack too early or too late, and touch-target sizing. The screenshot script already accepts an arbitrary viewport width as its third argument, so no script changes are needed — just add a third `screenshot.mjs` call at the tablet width in each QA step (Phase 2 tiles, Phase 3 layouts, Phase 4 drafts, Phase 5 fidelity check) and save with a `-tablet` suffix (e.g., `layout1-v1-tablet.png`). The style tile grid is already responsive (3 → 2 columns at 1024px), so tile screenshots at tablet width would also verify that breakpoint.
 
 ## Test Plan
 
 - [ ] Run design-site workflow through Phase 4 and confirm pages land in `drafts/`, not `approved/`
 - [ ] Confirm gallery shows "Mockup Review" phase with draft artifacts in the sidebar
-- [ ] Provide feedback and confirm iteration creates versioned files in `drafts/`
-- [ ] Say "approved" and confirm files promote to `approved/` with clean slugs
+- [ ] Provide feedback, choose "update current version", and confirm file is edited in place
+- [ ] Provide feedback, choose "new version", and confirm versioned copy is created in `drafts/`
+- [ ] Say "approved" and confirm all 7 checklist steps complete (copy, add approved, remove drafts, set phase, screenshot, restart server, confirm)
+- [ ] Confirm approved artifacts appear in sidebar even while phase is `drafts`
+- [ ] Confirm gallery sidebar tokens card shows color bar, fonts, and pills after Phase 2 lock
+- [ ] Confirm gallery version labels match `artifact.version` field, not array order
 - [ ] Confirm Phase 4.5 content extraction reads from `approved/` (unchanged)
 - [ ] Confirm Phase 5 build uses `approved/` mockups as spec (unchanged)
+- [ ] Verify screenshots go to phase-specific subfolders under `verification/`
+- [ ] Verify cleanup prompt appears after Phase 4 approval and Phase 5 completion
+- [ ] Verify WordPress installation check runs in Phase 0.5 and handles uninstalled state
 - [ ] Verify gallery phase regression works correctly with the new phase
