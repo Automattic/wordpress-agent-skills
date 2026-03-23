@@ -117,6 +117,7 @@ If redesign is detected, proceed with content import. If not, skip directly to P
    ```bash
    mkdir -p <site-path>/design/inspiration/screenshots
    node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "<original-site-url>" "<site-path>/design/inspiration/screenshots/original-homepage.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "<original-site-url>" "<site-path>/design/inspiration/screenshots/original-homepage-tablet.png" 768
    node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "<original-site-url>" "<site-path>/design/inspiration/screenshots/original-homepage-mobile.png" 375
    ```
    If the site has key subpages (about, services, etc.), screenshot those too. These screenshots are referenced during Phase 1 direction planning to identify what works and what needs to change.
@@ -234,6 +235,7 @@ This costs almost zero context (1 line per read) and ensures subagents inherit r
 1. For each tile HTML file, screenshot via the gallery asset route:
    ```bash
    node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=styles/v[N]-tile[X].html" "<site-path>/design/verification/phase2-tile[X]-v1.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=styles/v[N]-tile[X].html" "<site-path>/design/verification/phase2-tile[X]-v1-tablet.png" 768
    ```
 2. Read each screenshot with the Read tool (Claude can see images). Evaluate against:
    - Google Fonts loaded correctly (not falling back to system fonts)
@@ -314,9 +316,10 @@ Write(<site-path>/design/pages/.warm, "")
 
 **Screenshot QA loop** — the orchestrator verifies each layout visually:
 
-1. For each layout HTML file, screenshot at desktop and mobile widths:
+1. For each layout HTML file, screenshot at desktop, tablet, and mobile widths:
    ```bash
    node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=pages/v[N]-layout[X].html" "<site-path>/design/verification/phase3-layout[X]-v1.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=pages/v[N]-layout[X].html" "<site-path>/design/verification/phase3-layout[X]-v1-tablet.png" 768
    node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=pages/v[N]-layout[X].html" "<site-path>/design/verification/phase3-layout[X]-v1-mobile.png" 375
    ```
 2. Read each screenshot. Evaluate against:
@@ -387,6 +390,7 @@ Write(<site-path>/design/approved/.warm, "")
 1. For each approved page, screenshot via the gallery asset route:
    ```bash
    node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=approved/[slug].html" "<site-path>/design/verification/phase4-[slug]-v1.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=approved/[slug].html" "<site-path>/design/verification/phase4-[slug]-v1-tablet.png" 768
    ```
 2. Read each screenshot. Evaluate against:
    - Cross-page consistency (header, footer, nav, typography, colors)
@@ -611,6 +615,7 @@ Write(<site-path>/wp-content/themes/<theme-slug>/.warm, "")
 1. For each page, screenshot the live WordPress site:
    ```bash
    node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "<site-url>/<page-slug>/" "<site-path>/design/verification/phase5-[slug]-v1.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "<site-url>/<page-slug>/" "<site-path>/design/verification/phase5-[slug]-v1-tablet.png" 768
    ```
    For the homepage, use the site URL directly (no slug).
 
