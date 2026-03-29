@@ -25,6 +25,8 @@ Add a **draft → review → approved** pipeline to Phase 4, reusing the same re
 | `commands/design-site.md` | Rewrote Phase 4 with drafts folder, review prompt, iteration loop, and promotion step. Updated directory scaffolding and phase regression rules. Added tokens schema to Phase 2 locking step. Added screenshot cleanup prompts after Phase 4 approval and Phase 5 fidelity check. Added edit-vs-new-version user prompt to iteration loop. Reformatted approval promotion as 7-step checklist. Added WordPress installation verification to Phase 0.5. |
 | `templates/design-gallery.php` | Changed phase 4 PHASES key to `"drafts"` (matching the `artifacts.drafts` key in `gallery.json`). Added exception so `approved` phase always shows artifacts regardless of current phase status. Fixed version label bug to read `artifact.version` field instead of array index. Added draft version grouping by base slug with collapsible version history. |
 | `references/gallery.md` | Documented `drafts/` directory, `artifacts.drafts` schema, updated naming conventions, added `verification/` subfolder structure. |
+| `scripts/screenshot-revealed.mjs` | **New** — Puppeteer screenshot variant that waits for CSS reveal animations to complete before capturing, preventing blank/mid-transition screenshots in mockup QA. |
+| `references/design-system-phase3.md` | **New** — Image placeholder zone styling rules for Phase 3 page designs. |
 | `IMPROVEMENTS.md` | Added summaries of completed improvements. |
 
 ### Design decisions
@@ -49,9 +51,13 @@ Add a **draft → review → approved** pipeline to Phase 4, reusing the same re
 - **Approval checklist** — Promotion from drafts to approved reformatted as a 7-step checklist to prevent steps from being missed (gallery cleanup was skipped in session 7).
 - **WordPress installation check** — Phase 0.5 now verifies WordPress is installed after confirming Studio is running, with CLI and HTTP POST fallbacks for the known Studio CLI silent-failure issue.
 
-### Future improvement: Add tablet-width screenshots
+### Tablet-width screenshots
 
-The screenshot workflow currently captures two viewport widths — desktop (1440px) and mobile (375px) — but skips tablet. Adding a tablet breakpoint (~768px or 1024px) would catch layout issues that fall between the two extremes: navigation collapse points, grid column reflows (3-col → 2-col), side-by-side sections that stack too early or too late, and touch-target sizing. The screenshot script already accepts an arbitrary viewport width as its third argument, so no script changes are needed — just add a third `screenshot.mjs` call at the tablet width in each QA step (Phase 2 tiles, Phase 3 layouts, Phase 4 drafts, Phase 5 fidelity check) and save with a `-tablet` suffix (e.g., `layout1-v1-tablet.png`). The style tile grid is already responsive (3 → 2 columns at 1024px), so tile screenshots at tablet width would also verify that breakpoint.
+Added a tablet breakpoint (768px) to all QA phases alongside the existing desktop (1440px) and mobile (375px) captures. This catches layout issues between the two extremes — navigation collapse points, grid column reflows, and touch-target sizing. Screenshots are saved with a `-tablet` suffix (e.g., `layout1-v1-tablet.png`).
+
+### PR base
+
+This branch builds on `add-screenshot-workflow`. Target that branch (or trunk after it merges) to avoid pulling in unrelated earlier changes.
 
 ## Test Plan
 
@@ -68,4 +74,6 @@ The screenshot workflow currently captures two viewport widths — desktop (1440
 - [ ] Verify screenshots go to phase-specific subfolders under `verification/`
 - [ ] Verify cleanup prompt appears after Phase 4 approval and Phase 5 completion
 - [ ] Verify WordPress installation check runs in Phase 0.5 and handles uninstalled state
+- [ ] Verify tablet-width (768px) screenshots are captured in all QA phases alongside desktop and mobile
+- [ ] Verify `screenshot-revealed.mjs` waits for animations before capturing
 - [ ] Verify gallery phase regression works correctly with the new phase
