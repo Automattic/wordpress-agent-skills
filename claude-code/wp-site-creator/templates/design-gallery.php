@@ -9,7 +9,7 @@ if ( ! isset( $_GET['design-gallery'] ) && ! isset( $_GET['design-asset'] ) && !
 	return;
 }
 
-add_action( 'template_redirect', function () {
+add_action( 'init', function () {
 	$design_dir = ABSPATH . 'design/';
 
 	// ── Route: JSON API (for auto-poll) ──
@@ -134,6 +134,22 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#222
 .artifact-link .dots{display:flex;gap:3px}
 .dot{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.08);display:inline-block;flex-shrink:0}
 
+/* Artifact sub-headings (Drafts / Approved Mockups within Phase 4) */
+.artifact-subheading{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#bbb;padding:8px 0 3px;margin:0}
+
+/* Version group (drafts phase) */
+.version-group-label{font-size:12px;font-weight:600;color:#555;padding:6px 0 2px;margin:0}
+.version-list{padding:0 0 2px 14px;list-style:none}
+.version-list li{margin:0}
+.version-link{
+  display:flex;align-items:center;gap:6px;padding:2px 12px 2px 0;
+  font-size:11px;color:#999;cursor:pointer;
+  border:none;background:none;font:inherit;width:100%;text-align:left;
+  transition:color .12s;
+}
+.version-link:hover{color:#222}
+.version-link.active{color:#3858e9;font-weight:600}
+
 /* Tokens card in sidebar */
 .sb-tokens{
   margin:8px 12px 16px;padding:14px;background:#fff;
@@ -220,7 +236,7 @@ var PHASES = [
   { key: "inspiration", label: "Inspiration", num: 1 },
   { key: "styles", label: "Style Exploration", num: 2 },
   { key: "pages", label: "Page Design", num: 3 },
-  { key: "approved", label: "Full Site Mockup", num: 4 },
+  { key: "drafts", label: "Mockup Review", num: 4 },
   { key: "theme", label: "WordPress Site", num: 5 }
 ];
 
@@ -232,7 +248,10 @@ var activeFile = null;
 function renderSidebar() {
   var d = currentData;
   var cur = d.phase || "styles";
-  var curIdx = PHASES.map(function(p) { return p.key; }).indexOf(cur);
+  // "approved" is a transition state between drafts and theme — map it so
+  // drafts shows as done and theme stays future.
+  var displayCur = cur === "approved" ? null : cur;
+  var curIdx = displayCur ? PHASES.map(function(p) { return p.key; }).indexOf(displayCur) : -1;
 
   var html = '<div class="sb-header">'
     + '<h1>' + esc(d.project) + '</h1>'
@@ -243,7 +262,10 @@ function renderSidebar() {
 
   for (var i = 0; i < PHASES.length; i++) {
     var p = PHASES[i];
-    var status = i < curIdx ? "done" : i === curIdx ? "current" : "future";
+    // curIdx === -1 means "approved" state: all phases before theme are done, theme is future.
+    var status = curIdx === -1
+      ? (p.key === "theme" ? "future" : "done")
+      : (i < curIdx ? "done" : i === curIdx ? "current" : "future");
     var artifacts = (d.artifacts && d.artifacts[p.key]) || [];
 
     html += '<div class="phase-item ' + status + '">'
@@ -252,16 +274,85 @@ function renderSidebar() {
       + '<span>' + p.label + '</span>'
       + '</button>';
 
-    if ((status === "done" || status === "current") && artifacts.length && p.key !== "inspiration" && p.key !== "theme") {
+    var approvedArtifacts = p.key === "drafts" ? ((d.artifacts && d.artifacts["approved"]) || []) : [];
+    var showArtifacts = (status === "done" || status === "current") && (artifacts.length || approvedArtifacts.length) && p.key !== "inspiration" && p.key !== "theme";
+
+    if (showArtifacts) {
       html += '<ul class="artifact-list">';
-      for (var j = 0; j < artifacts.length; j++) {
-        var a = artifacts[j];
-        var isActive = activePhase === p.key && activeFile === a.file;
-        html += '<li><button class="artifact-link' + (isActive ? ' active' : '') + '" data-phase="' + p.key + '" data-file="' + a.file + '" onclick="selectArtifact(\'' + p.key + '\',\'' + a.file + '\')">'
-          + esc(a.label || ('v' + a.version))
-          + '<span class="dots">' + dots(a.colors || []) + '</span>'
-          + '</button></li>';
+
+      if (p.key === "drafts") {
+        // Show "Drafts" sub-heading only when approved items also exist
+        if (artifacts.length && approvedArtifacts.length) {
+          html += '<li><p class="artifact-subheading">Drafts</p></li>';
+        }
+
+        // Group draft artifacts by base slug to show version history
+        var groups = [];
+        var groupMap = {};
+        for (var j = 0; j < artifacts.length; j++) {
+          var a = artifacts[j];
+          var fname = (a.file || "").replace(/^drafts\//, "").replace(/\.html$/, "");
+          var base = fname.replace(/-v\d+$/, "");
+          if (!groupMap[base]) { groupMap[base] = []; groups.push(base); }
+          groupMap[base].push(a);
+        }
+        for (var g = 0; g < groups.length; g++) {
+          var base = groups[g];
+          var items = groupMap[base];
+          if (items.length === 1) {
+            var a = items[0];
+            var isActive = activePhase === "drafts" && activeFile === a.file;
+            html += '<li><button class="artifact-link' + (isActive ? ' active' : '') + '" data-phase="drafts" data-file="' + a.file + '" onclick="selectArtifact(\'drafts\',\'' + a.file + '\')">'
+              + esc(a.label || ('v' + a.version))
+              + '<span class="dots">' + dots(a.colors || []) + '</span>'
+              + '</button></li>';
+          } else {
+            var parentLabel = items[0].label || base.replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+            parentLabel = parentLabel.replace(/\s*[-—:].+$/, '');
+            html += '<li><p class="version-group-label">' + esc(parentLabel) + '</p>';
+            html += '<ul class="version-list">';
+            for (var v = 0; v < items.length; v++) {
+              var a = items[v];
+              var isActive = activePhase === "drafts" && activeFile === a.file;
+              var fullLabel = a.label || '';
+              var desc = fullLabel.replace(/^[^—:]+[—:]\s*/, '');
+              desc = desc.replace(/^V\d+\s*[-—:]\s*/i, '');
+              var vNum = a.version != null ? a.version : (v + 1);
+              var vTag = 'v' + vNum;
+              var vLabel = desc ? (vTag + ' — ' + desc) : vTag;
+              html += '<li><button class="version-link' + (isActive ? ' active' : '') + '" data-phase="drafts" data-file="' + a.file + '" onclick="selectArtifact(\'drafts\',\'' + a.file + '\')">'
+                + esc(vLabel)
+                + '<span class="dots">' + dots(a.colors || []) + '</span>'
+                + '</button></li>';
+            }
+            html += '</ul></li>';
+          }
+        }
+
+        // Approved Mockups sub-section
+        if (approvedArtifacts.length) {
+          html += '<li><p class="artifact-subheading">Approved Mockups</p></li>';
+          for (var j = 0; j < approvedArtifacts.length; j++) {
+            var a = approvedArtifacts[j];
+            var isActive = activePhase === "approved" && activeFile === a.file;
+            html += '<li><button class="artifact-link' + (isActive ? ' active' : '') + '" data-phase="approved" data-file="' + a.file + '" onclick="selectArtifact(\'approved\',\'' + a.file + '\')">'
+              + esc(a.label || ('v' + a.version))
+              + '<span class="dots">' + dots(a.colors || []) + '</span>'
+              + '</button></li>';
+          }
+        }
+      } else {
+        // All other phases: flat list
+        for (var j = 0; j < artifacts.length; j++) {
+          var a = artifacts[j];
+          var isActive = activePhase === p.key && activeFile === a.file;
+          html += '<li><button class="artifact-link' + (isActive ? ' active' : '') + '" data-phase="' + p.key + '" data-file="' + a.file + '" onclick="selectArtifact(\'' + p.key + '\',\'' + a.file + '\')">'
+            + esc(a.label || ('v' + a.version))
+            + '<span class="dots">' + dots(a.colors || []) + '</span>'
+            + '</button></li>';
+        }
       }
+
       html += '</ul>';
     }
     html += '</div>';
@@ -311,14 +402,14 @@ function selectArtifact(phase, file) {
   activeFile = file;
 
   // Update active states in sidebar.
-  document.querySelectorAll('.artifact-link').forEach(function(el) {
+  document.querySelectorAll('.artifact-link, .version-link').forEach(function(el) {
     el.classList.toggle('active', el.getAttribute('data-phase') === phase && el.getAttribute('data-file') === file);
   });
 
   var a = findArtifact(phase, file);
   var label = a && a.label ? a.label : file;
   var phaseObj = PHASES.filter(function(p) { return p.key === phase; })[0];
-  var phaseLabel = phaseObj ? phaseObj.label : phase;
+  var phaseLabel = phaseObj ? phaseObj.label : (phase === "approved" ? "Approved Mockups" : phase);
   document.getElementById('mainTitle').textContent = phaseLabel + ' — ' + label;
   document.getElementById('viewer').innerHTML = '<iframe src="?design-asset=' + encodeURIComponent(file) + '"></iframe>';
 }
@@ -370,10 +461,19 @@ function selectPhase(phase) {
     return;
   }
 
+  // For the Mockup Review phase, prefer approved artifacts if they exist.
+  var resolvedPhase = phase;
   var artifacts = (currentData.artifacts && currentData.artifacts[phase]) || [];
+  if (phase === "drafts") {
+    var approvedArtifacts = (currentData.artifacts && currentData.artifacts["approved"]) || [];
+    if (approvedArtifacts.length) {
+      resolvedPhase = "approved";
+      artifacts = approvedArtifacts;
+    }
+  }
   if (artifacts.length) {
     var last = artifacts[artifacts.length - 1];
-    selectArtifact(phase, last.file);
+    selectArtifact(resolvedPhase, last.file);
   } else {
     document.getElementById('viewer').innerHTML = '<div class="empty-state">Waiting for first artifact...</div>';
     activePhase = phase;
@@ -414,6 +514,7 @@ setInterval(async function() {
       // If no artifact is selected yet but there are now artifacts, show the latest.
       if (!activeFile) {
         var cur = currentData.phase || "styles";
+        // "approved" artifacts live under the "approved" key; treat like any other phase.
         var curArtifacts = (currentData.artifacts && currentData.artifacts[cur]) || [];
         if (curArtifacts.length && cur !== "inspiration" && cur !== "theme") {
           var latest = curArtifacts[curArtifacts.length - 1];
@@ -435,6 +536,7 @@ renderSidebar();
   var curArtifacts = (currentData.artifacts && currentData.artifacts[cur]) || [];
   if (curArtifacts.length && cur !== "inspiration" && cur !== "theme") {
     var latest = curArtifacts[curArtifacts.length - 1];
+    // "approved" phase: selectArtifact handles the label fallback
     selectArtifact(cur, latest.file);
   }
 })();

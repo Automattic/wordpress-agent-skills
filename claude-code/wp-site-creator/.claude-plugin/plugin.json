@@ -1,8 +1,8 @@
 {
   "name": "create-wp-site",
-  "version": "0.0.1",
+  "version": "0.0.1B",
   "description": "Create WordPress block themes from simple descriptions and deploy them to a local WordPress Studio site, or, generate professional themes through an interactive workflow: describe your site, choose from design options, and preview on a real WordPress installation.",
   "author": {
-    "name": "Automattic"
+    "name": "Automattic+Three Rings Enterprises"
   }
 }

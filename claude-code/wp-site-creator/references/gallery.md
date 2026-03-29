@@ -40,10 +40,23 @@ All design outputs live inside the Studio site at `<site-path>/design/`. Theme f
 │   ├── v1-layout3.html
 │   └── ...
 │
-├── approved/                    # Phase 4 artifacts
+├── drafts/                      # Phase 4 draft artifacts (user review)
+│   ├── homepage.html
+│   ├── homepage-v2.html         # iteration
+│   ├── about.html
+│   └── ...
+│
+├── approved/                    # Phase 4 approved artifacts (after user approval)
 │   ├── homepage.html
 │   ├── about.html
 │   └── ...
+│
+├── verification/                # QA screenshots (organized by phase)
+│   ├── style-exploration/
+│   ├── page-design/
+│   ├── mockup-review/
+│   ├── approved/
+│   └── wordpress-build/
 │
 ├── design-tokens.json
 ├── design-patterns.html
@@ -58,6 +71,8 @@ All design outputs live inside the Studio site at `<site-path>/design/`. Theme f
 
 - Style tiles: `v1-tile1.html`, `v1-tile2.html`, `v1-tile3.html`, then `v2-tile1.html`, etc.
 - Page layouts: `v1-layout1.html`, `v1-layout2.html`, `v1-layout3.html`, then `v2-layout1.html`, etc.
+- Draft mockups: `homepage.html`, `about.html`, etc. Iterations: `homepage-v2.html`, `homepage-v3.html`, etc.
+- Approved mockups: `homepage.html`, `about.html` — always clean slugs (no version suffix). Copied from the latest draft version during promotion.
 - Latest version is always the highest number. Never overwrite — always create the next version.
 - No restart naming (`-r2`) — just keep incrementing.
 - `design-tokens.json` and `design-package.json` live at `<site-path>/design/` root (contracts, not visual artifacts).
@@ -100,6 +115,7 @@ Written by the orchestrator during gallery scaffolding. Updated as phases progre
       { "file": "styles/v1-tile1.html", "version": 1, "label": "Tile 1: Mood Name", "colors": ["#hex1", "#hex2"] }
     ],
     "pages": [],
+    "drafts": [],
     "approved": []
   },
   "tokens": null,
@@ -113,11 +129,11 @@ Written by the orchestrator during gallery scaffolding. Updated as phases progre
 |-------|------|-------------|
 | `project` | string | Site name from the brief |
 | `brief` | string | One-line site description |
-| `phase` | string | Current phase: `inspiration`, `styles`, `pages`, `approved`, `theme` |
+| `phase` | string | Current phase: `inspiration`, `styles`, `pages`, `drafts`, `approved`, `theme` |
 | `startedAt` | string | ISO 8601 timestamp |
 | `siteUrl` | string | Studio site URL (from `studio site status`) |
 | `references` | array | URL references from Phase 1 (empty array if none) |
-| `artifacts` | object | Artifact arrays keyed by phase (`styles`, `pages`, `approved`) |
+| `artifacts` | object | Artifact arrays keyed by phase (`styles`, `pages`, `drafts`, `approved`) |
 | `tokens` | object/null | Design tokens (set when tokens are locked in Phase 2) |
 | `themeSlugs` | array | Theme folder names created in Phase 5 |
 
@@ -166,7 +182,9 @@ The orchestrator owns gallery state. Subagents NEVER touch `gallery.json`.
 
 **Phase 3** — Subagent writes layout HTML files. Orchestrator updates `gallery.json` artifacts.
 
-**Phase 4** — Subagent writes approved page HTML files. Orchestrator updates `gallery.json`: set `phase` to `approved`, add files to `artifacts.approved`.
+**Phase 4 (drafts)** — Subagent writes draft page HTML files to `drafts/`. Orchestrator updates `gallery.json`: set `phase` to `drafts`, add files to `artifacts.drafts`. User reviews and iterates.
+
+**Phase 4 (approval)** — User approves drafts. Orchestrator copies final versions from `drafts/` to `approved/`, updates `gallery.json`: set `phase` to `approved`, populates `artifacts.approved`.
 
 **Phase 5** — Subagent builds WordPress theme. Orchestrator updates `gallery.json`: set `phase` to `theme`, add theme slug to `themeSlugs`.
 

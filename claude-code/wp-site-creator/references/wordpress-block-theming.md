@@ -226,6 +226,27 @@ function theme_slug_register_patterns() {
 add_action( 'init', 'theme_slug_register_patterns' );
 ```
 
+## SVG Noise Filter Injection
+
+When a theme uses the `.has-grain-texture` utility class (see `design-system-phase2.md`), the inline SVG filter definition must be present in the page DOM. Inject it via `wp_footer` in `functions.php`:
+
+```php
+// Inject SVG grain filter for .has-grain-texture utility
+function theme_slug_grain_filter() {
+    ?>
+    <svg style="position:absolute;width:0;height:0" aria-hidden="true">
+        <filter id="grain-filter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+            <feColorMatrix type="saturate" values="0"/>
+        </filter>
+    </svg>
+    <?php
+}
+add_action( 'wp_footer', 'theme_slug_grain_filter' );
+```
+
+Only add this to `functions.php` when the theme actually uses `.has-grain-texture`. The filter is invisible and adds negligible page weight.
+
 ## Security in Generated Code
 
 - When `functions.php` outputs any user-derived value, use WordPress escaping functions:
@@ -234,6 +255,19 @@ add_action( 'init', 'theme_slug_register_patterns' );
   - URL context: `esc_url()`
 - Never use `eval()`, `create_function()`, `shell_exec()`, `exec()`, or `system()` in generated theme code
 - Static block themes with hardcoded content (the default) do not need escaping — WordPress core blocks handle this. Escaping matters only if generating PHP that renders dynamic data.
+
+### Global Link Color Override
+
+When `theme.json` sets a global link color via `styles.elements.link.color.text`, WordPress applies it at high specificity site-wide. This overrides custom link colors in footers, dark sections, and any component with its own link styling — causing light-colored links to appear in dark backgrounds where they are unreadable.
+
+**Fix:** Sections with custom link colors must include explicit overrides in `style.css`:
+
+```css
+.site-footer a { color: inherit; text-decoration: none; }
+.footer-nav-link, .footer-nav-link a { color: rgba(255,255,255,0.5) !important; }
+```
+
+Use `!important` for footer and dark-section link colors to beat the global specificity set by `theme.json` element styles.
 
 ## style.css
 
@@ -257,6 +291,33 @@ Text Domain: theme-slug
 */
 
 ```
+
+## Interactive States (Hard Rule)
+
+**Every clickable element MUST have `:hover`, `:focus-visible`, and `:active` states. No exceptions.**
+
+This applies to: buttons, links, cards with hover-lift, nav items, and any element with a click/tap handler. Missing states make the site feel unfinished and harm accessibility (`:focus-visible` is essential for keyboard navigation).
+
+```css
+/* Example: button with all three states */
+.wp-block-button__link {
+  transition: transform 0.2s var(--ease-default), box-shadow 0.2s var(--ease-default), background-color 0.2s var(--ease-default);
+}
+.wp-block-button__link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--shadow-color), 0.15);
+}
+.wp-block-button__link:focus-visible {
+  outline: 2px solid var(--wp--preset--color--accent);
+  outline-offset: 2px;
+}
+.wp-block-button__link:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+```
+
+**`:focus-visible` vs `:focus`:** Use `:focus-visible` (not `:focus`) so styles only appear for keyboard navigation, not mouse clicks. This prevents the focus ring from showing on click while keeping keyboard users oriented.
 
 ## Animation & Motion in Block Themes
 
@@ -331,6 +392,8 @@ Generate and adapt these classes (these are examples only, do not limit yourself
 .stagger-children > *:nth-child(3) { animation-delay: 0.3s; }
 .stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
 ```
+
+**Hard rule — never use `transition: all`:** Always name the specific properties to transition. `transition: all` forces the browser to track every animatable property on every frame, causes unintended animations on focus states or JS-triggered style changes, and makes it easy to accidentally animate layout-triggering properties (`width`, `height`, `padding`, `margin`) that bypass GPU compositing and cause repaints. Correct pattern: `transition: transform 0.3s var(--ease-default), opacity 0.2s ease`.
 
 **Interactive transitions:**
 ```css
@@ -428,6 +491,29 @@ Then in `style.css`, pair with CSS that starts elements hidden and animates them
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 .animate-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+```
+
+**Background sections:** Do not animate `opacity` on sections that have a background color (`has-background`). The background fading from transparent is visually jarring — the page shows through the section momentarily. Instead, keep the section at `opacity: 1; transform: none` and animate only its children:
+
+```css
+.wp-block-group.alignfull.animate-on-scroll.has-background,
+.wp-block-cover.alignfull.animate-on-scroll {
+  opacity: 1;
+  transform: none;
+}
+/* Children start hidden */
+.animate-on-scroll.has-background > .wp-block-group__inner-container > *,
+.wp-block-cover.animate-on-scroll > .wp-block-cover__inner-container > * {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+/* Reveal children when section is visible */
+.animate-on-scroll.has-background.is-visible > .wp-block-group__inner-container > *,
+.animate-on-scroll.is-visible > .wp-block-cover__inner-container > * {
   opacity: 1;
   transform: translateY(0);
 }

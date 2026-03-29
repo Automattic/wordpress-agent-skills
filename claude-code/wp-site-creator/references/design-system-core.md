@@ -107,6 +107,9 @@ Choose fonts that are beautiful, unique, and interesting.
 - Headings should command attention
 - Body text should be comfortable to read (16-18px minimum)
 
+**Heading letter-spacing:**
+- Apply `letter-spacing: -0.03em` on large headings (h1, h2). Tight tracking on display type creates a polished, editorial feel. Smaller headings (h3-h6) and body text should keep default or slightly tighter spacing (`-0.01em`).
+
 **Text wrapping:**
 - Headings: `text-wrap: balance` — prevents awkward short last lines
 - Paragraphs: `text-wrap: pretty` — avoids orphaned words on the last line
@@ -141,6 +144,20 @@ Use animations for effects and micro-interactions. Prioritize CSS-only solutions
 - Scroll-triggered animations that surprise
 - Hover states that respond meaningfully
 
+**Interactive states (mandatory):**
+Every clickable element needs three states: `:hover`, `:focus-visible`, and `:active`. No exceptions. `:hover` communicates affordance, `:focus-visible` enables keyboard navigation (accessibility), and `:active` provides tactile feedback. A site missing any of these feels unfinished. See `wordpress-block-theming.md` for the implementation pattern.
+
+**Easing character:**
+Default `ease` and `ease-in-out` feel lifeless. Define a signature easing curve that gives the site personality:
+
+- **Spring-style** (playful/energetic): `cubic-bezier(0.34, 1.56, 0.64, 1)` — slight overshoot for bouncy hover lifts and entrance animations
+- **Smooth decelerate** (refined/luxury): `cubic-bezier(0.22, 1, 0.36, 1)` — fast start, gentle settle
+- **Snappy** (tech/SaaS): `cubic-bezier(0.16, 1, 0.3, 1)` — quick and precise
+
+Pick one per site and use it consistently via a CSS custom property (`--ease-default`). Reserve `ease` only for simple opacity fades.
+
+**Hard rule — never use `transition: all`:** Animating all properties forces the browser to check every animatable property on every frame, triggering expensive layout recalculations and creating unintended transitions on focus rings, visited links, or JavaScript-driven style changes. Always specify individual properties: `transition: transform 0.3s var(--ease-default), opacity 0.2s ease`. Only `transform` and `opacity` animate on the GPU compositor thread without touching layout.
+
 **Implementation:** See the `${CLAUDE_PLUGIN_ROOT}/references/wordpress-block-theming.md` reference for CSS animation patterns and scroll-trigger integration.
 
 ### Spatial Composition
@@ -152,6 +169,18 @@ Break out of predictable layouts:
 - **Diagonal flow**: Guide the eye with angled elements
 - **Grid-breaking**: Strategic elements that escape the grid
 - **Negative space**: Generous whitespace OR controlled density (pick one)
+
+### Depth & Layering System
+
+Surfaces should have a layering system — not all sit at the same z-plane. Define three elevation tiers with distinct shadow and background treatments:
+
+| Tier | Use | Treatment |
+|------|-----|-----------|
+| **Base** | Page background, main content areas | Flat, primary background color. No shadow. |
+| **Elevated** | Cards, content panels, sticky headers | Subtle shadow (1-2 layers), slightly lighter/darker surface than base. |
+| **Floating** | Modals, dropdowns, tooltips, popovers | Pronounced multi-layer shadow, distinct surface color from base. |
+
+Implement via CSS utility classes (e.g., `.elevation-base`, `.elevation-elevated`, `.elevation-floating`) applied to `wp:group` blocks via `className`. Each tier's shadow uses the brand-tinted shadow approach (see Backgrounds section below). In dark mode, reduce shadow opacity and consider adding a subtle border instead, since shadows are less visible on dark backgrounds.
 
 ### Backgrounds & Visual Details
 
@@ -166,6 +195,22 @@ Create atmosphere and depth rather than defaulting to solid colors:
 | Dramatic shadows | Premium, elevated |
 | Decorative borders | Editorial, structured |
 | Grain overlays | Vintage, analog feel |
+
+**Shadow approach:**
+Shadows should be layered and color-tinted, not flat generic `box-shadow`. Use multiple shadow layers with the brand palette at low opacity for realistic depth:
+
+```css
+/* AVOID — flat, generic shadow */
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+/* PREFER — layered, color-tinted shadows */
+box-shadow:
+  0 1px 2px rgba(var(--shadow-color), 0.07),
+  0 4px 8px rgba(var(--shadow-color), 0.07),
+  0 12px 24px rgba(var(--shadow-color), 0.10);
+```
+
+Where `--shadow-color` is derived from the brand's primary or secondary color (e.g., a blue brand uses blue-tinted shadows). This creates more natural, cohesive depth than achromatic black shadows.
 
 ### Iconography
 
