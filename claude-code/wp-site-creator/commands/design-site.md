@@ -22,7 +22,7 @@ You are a workflow orchestrator. Delegate heavy creative work to Task() subagent
 
 All design outputs: `<site-path>/design/`. Theme files: `<site-path>/wp-content/themes/<slug>/`. `<site-path>` is set in Phase 0.5. Use absolute paths in all tool calls.
 
-Key subdirectories: `design/{import,inspiration/screenshots,styles,pages,approved}` plus `design-tokens.json`, `design-package.json`, `site-spec.json`, `gallery.json` at the design root. Gallery is served at `http://<site-url>/?design-gallery`.
+Key subdirectories: `design/{import,inspiration/screenshots,styles,pages,approved,verification}` plus `site-spec.md`, `design-tokens.json`, `design-package.json`, `gallery.json` at the design root. Gallery is served at `http://<site-url>/?design-gallery`.
 
 ## Trigger
 
@@ -80,9 +80,10 @@ Before any design work begins, confirm that WordPress Studio is installed, the C
 
 Store `<site-path>` for all subsequent phases. Use `STUDIO_HOME` and `<site-path>` in all paths from this point forward.
 
-9. **Install gallery mu-plugin:**
+9. **Install gallery mu-plugin and create verification directory:**
    ```bash
    mkdir -p <site-path>/wp-content/mu-plugins
+   mkdir -p <site-path>/design/verification
    cp ${CLAUDE_PLUGIN_ROOT}/templates/design-gallery.php <site-path>/wp-content/mu-plugins/
    ```
 10. **Get site URL:** `studio site status --path <site-path>` — store the URL as `<site-url>` for gallery access.
@@ -112,11 +113,20 @@ If redesign is detected, proceed with content import. If not, skip directly to P
    - If the user provides a WordPress XML export, parse it
    - If neither, ask: "Can you share the site URL or a WordPress XML export? I'll pull your existing content from there."
 
-3. **Write content summary**: Save to `<site-path>/design/import/content-summary.json` using the schema from the `content-import` skill
+3. **Screenshot the original site** (if a URL was provided): Capture the existing design for reference — not to match it, but to understand what to preserve vs. change.
+   ```bash
+   mkdir -p <site-path>/design/inspiration/screenshots
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "<original-site-url>" "<site-path>/design/inspiration/screenshots/original-homepage.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "<original-site-url>" "<site-path>/design/inspiration/screenshots/original-homepage-tablet.png" 768
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "<original-site-url>" "<site-path>/design/inspiration/screenshots/original-homepage-mobile.png" 375
+   ```
+   If the site has key subpages (about, services, etc.), screenshot those too. These screenshots are referenced during Phase 1 direction planning to identify what works and what needs to change.
 
-4. **Present findings**: Show the user what was imported (page list, content overview, recommendations for gaps)
+4. **Write content summary**: Save to `<site-path>/design/import/content-summary.json` using the schema from the `content-import` skill
 
-5. **Proceed to Phase 1**: The content summary pre-populates the site specification. The user can adjust before moving on.
+5. **Present findings**: Show the user what was imported (page list, content overview, recommendations for gaps). If original screenshots were captured, briefly note what works visually and what the redesign should improve.
+
+6. **Proceed to Phase 1**: The content summary pre-populates the site specification. The original screenshots inform direction planning. The user can adjust before moving on.
 
 ### New Site (Default)
 
@@ -161,9 +171,19 @@ Then ask: "Anything to adjust?"
 Ask the user to describe their site:
 "Tell me about the site you want to create. Include the name, what it's for, and any style preferences you have."
 
+### Save Site Spec
+
+After the user confirms the spec (or after adjustments), write the confirmed specification to `<site-path>/design/site-spec.md`. Format it as readable markdown with sections for the brief, design direction, and structure. This file is the source of truth for all subsequent phases — subagents read it from disk rather than receiving it pasted into prompts.
+
+```bash
+mkdir -p <site-path>/design
+```
+
+Then write the spec using the Write tool to `<site-path>/design/site-spec.md`.
+
 ### Image Collection
 
-After the spec is confirmed and before planning directions, ask:
+After the spec is saved and before planning directions, ask:
 
 "If you have any images or design documents that will inform the design — logos, photos, brand guidelines, mood boards, etc. — please share the folder they are located in with me."
 
@@ -192,7 +212,7 @@ Present as a compact numbered list — 3-4 lines per direction. Then say: "Gener
 
 After direction approval, execute IN PARALLEL:
 
-**A. Scaffold Gallery** (orchestrator): Create dirs (`mkdir -p <site-path>/design/{import,inspiration/screenshots,styles,pages,approved}`). **Read `${CLAUDE_PLUGIN_ROOT}/references/gallery.md` first** for the full schema, then write `gallery.json` with initial data (project, brief, phase, startedAt, siteUrl, empty artifacts). Open gallery: `open "http://<site-url>/?design-gallery"`. Say: "Design gallery is open — it auto-refreshes as I add designs."
+**A. Scaffold Gallery** (orchestrator): Create dirs (`mkdir -p <site-path>/design/{import,inspiration/screenshots,styles,pages,approved,verification}`). **Read `${CLAUDE_PLUGIN_ROOT}/references/gallery.md` first** for the full schema, then write `gallery.json` with initial data (project, brief, phase, startedAt, siteUrl, empty artifacts). Open gallery: `open "http://<site-url>/?design-gallery"`. Say: "Design gallery is open — it auto-refreshes as I add designs."
 
 **B. Spawn 3 Tile Subagents** (parallel Task() calls, one per direction):
 
@@ -210,6 +230,24 @@ This costs almost zero context (1 line per read) and ensures subagents inherit r
 
 ### After Subagents Complete
 
+**Screenshot QA loop** — the orchestrator verifies each tile visually before presenting to the user:
+
+1. For each tile HTML file, screenshot via the gallery asset route:
+   ```bash
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=styles/v[N]-tile[X].html" "<site-path>/design/verification/phase2-tile[X]-v1.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=styles/v[N]-tile[X].html" "<site-path>/design/verification/phase2-tile[X]-v1-tablet.png" 768
+   ```
+2. Read each screenshot with the Read tool (Claude can see images). Evaluate against:
+   - Google Fonts loaded correctly (not falling back to system fonts)
+   - Color palette renders as intended (contrast, vibrancy)
+   - Light/dark mode styles are present
+   - CSS embellishments render correctly
+   - Button styles and hover states are visible
+3. If issues found: spawn a fix-up subagent with the screenshot path + specific issues to fix. The fix-up agent reads the screenshot, the tile HTML, and the design references, then writes a corrected tile file.
+4. Re-screenshot and re-evaluate (max 2 fix rounds per tile).
+5. Save final screenshots — these are referenced during token extraction to verify the chosen tile renders correctly.
+
+Then:
 1. Update `gallery.json` — add all 3 tiles to `artifacts.styles`. Each entry MUST include a descriptive `label` that is the mood/aesthetic name (e.g., "Butcher Block", "Smoke House", "Prairie Modern") — never a generic name like "v1" or "Tile 1".
 2. Say: "Style tiles ready — 3 directions in the gallery. Which one feels right?"
 
@@ -276,6 +314,25 @@ Write(<site-path>/design/pages/.warm, "")
 
 ### After Agent Completes
 
+**Screenshot QA loop** — the orchestrator verifies each layout visually:
+
+1. For each layout HTML file, screenshot at desktop, tablet, and mobile widths:
+   ```bash
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=pages/v[N]-layout[X].html" "<site-path>/design/verification/phase3-layout[X]-v1.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=pages/v[N]-layout[X].html" "<site-path>/design/verification/phase3-layout[X]-v1-tablet.png" 768
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=pages/v[N]-layout[X].html" "<site-path>/design/verification/phase3-layout[X]-v1-mobile.png" 375
+   ```
+2. Read each screenshot. Evaluate against:
+   - Section spacing and visual rhythm
+   - Grid alignment and column proportions
+   - Hero composition and vertical positioning (content in upper third, not vertically centered)
+   - Responsive behavior (desktop vs mobile screenshots)
+   - Animation initial states render correctly (elements are not invisibly stuck at `opacity: 0`)
+3. If issues found: spawn a fix-up subagent with the screenshot + specific issues.
+4. Re-screenshot and re-evaluate (max 2 fix rounds per layout).
+5. Save final screenshots for downstream comparison.
+
+Then:
 1. Update `gallery.json` — add all 3 layouts to `artifacts.pages`. Each entry MUST include a descriptive `label` that names the layout approach (e.g., "Magazine Grid", "Bold Hero", "Minimal Scroll") — never a generic name like "v1" or "Layout 1".
 2. Say: "Page layouts ready — 3 options in the gallery. Which direction works?"
 
@@ -328,13 +385,103 @@ Write(<site-path>/design/approved/.warm, "")
 
 ### After Agent Completes
 
-Update `gallery.json` — set `phase` to `approved`, add page files to `artifacts.approved`. Say: "Full site mockup ready — [N] pages in the gallery."
+**Screenshot QA loop** — the orchestrator verifies each mockup page visually:
+
+1. For each approved page, screenshot via the gallery asset route:
+   ```bash
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=approved/[slug].html" "<site-path>/design/verification/phase4-[slug]-v1.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "http://<site-url>/?design-asset=approved/[slug].html" "<site-path>/design/verification/phase4-[slug]-v1-tablet.png" 768
+   ```
+2. Read each screenshot. Evaluate against:
+   - Cross-page consistency (header, footer, nav, typography, colors)
+   - Page-specific content renders correctly (pricing tables, blog layouts, etc.)
+   - Hover states and interactive elements
+   - Overall visual polish and premium feel
+3. If issues found: spawn a fix-up subagent with the screenshot + specific issues.
+4. Re-screenshot and re-evaluate (max 2 fix rounds per page).
+5. Save final screenshots in `design/verification/` — these are the "approved specification" that Phase 5 must match.
+
+**Copy assets to site root:** Copy all user-supplied assets (logos, images) from the design directory to the site root so absolute paths (e.g., `/logo-black.png`) resolve correctly in the gallery iframe:
+```bash
+cp {{site-path}}/design/*.png {{site-path}}/ 2>/dev/null || true
+cp {{site-path}}/design/*.jpg {{site-path}}/ 2>/dev/null || true
+cp {{site-path}}/design/*.svg {{site-path}}/ 2>/dev/null || true
+```
+
+Then: Update `gallery.json` — set `phase` to `approved`, add page files to `artifacts.approved`. Say: "Full site mockup ready — [N] pages in the gallery."
 
 ### Iteration
 
 Page changes: spawn a new Task agent writing `[slug]-v2.html`. New pages: new file. Token changes: update and propagate. Always increment, never overwrite.
 
 **Output:** Approved HTML mockups in `<site-path>/design/approved/`.
+
+### Dual Preview Mode
+
+After mockup generation and QA are complete, offer both preview methods:
+
+1. **Gallery** (already running): `{{site-url}}/?design-gallery` — auto-polls for new assets during generation
+2. **Static dev server** (start now): Launch a local dev server for instant page review without WordPress PHP overhead:
+   ```bash
+   python3 -m http.server 8888 --directory {{site-path}}/design/approved/ &
+   DEV_SERVER_PID=$!
+   ```
+
+Present both URLs to the user:
+> Your approved mockups are ready for review:
+> - **Gallery view**: {{site-url}}/?design-gallery
+> - **Direct preview** (faster): http://localhost:8888/
+>
+> The direct preview serves files instantly without WordPress overhead. Use it for detailed page review.
+
+**Note:** Kill the dev server when transitioning to Phase 5: `kill $DEV_SERVER_PID 2>/dev/null`
+
+---
+
+## Phase 4.5: Content Extraction
+
+**Goal:** Extract all content from approved mockups into structured JSON so the build agent has a character-accurate source of truth.
+
+Create the output directory:
+```bash
+mkdir -p {{site-path}}/design/content
+```
+
+For each approved page in `{{site-path}}/design/approved/`, spawn a parallel Task agent with this prompt:
+
+> Read `{{site-path}}/design/approved/{{slug}}.html`. Extract every piece of content into a structured JSON file at `{{site-path}}/design/content/{{slug}}.json`.
+>
+> JSON schema:
+> ```json
+> {
+>   "slug": "...",
+>   "title": "Page Title",
+>   "sections": [
+>     {
+>       "id": "section-1",
+>       "type": "hero|features|cta|testimonials|...",
+>       "background": "color value or class name",
+>       "elements": [
+>         { "tag": "h1", "text": "Exact heading text", "className": "..." },
+>         { "tag": "p", "text": "Exact paragraph text character-for-character", "className": "..." },
+>         { "tag": "a", "text": "Link label", "href": "/path", "className": "..." },
+>         { "tag": "img", "src": "/image.jpg", "alt": "Alt text", "className": "..." }
+>       ]
+>     }
+>   ]
+> }
+> ```
+>
+> **Rules:**
+> - Preserve ALL text exactly as written — do not paraphrase, summarize, or rewrite
+> - Include every heading, paragraph, link label, button text, form placeholder, image alt text, and list item
+> - Capture className for every element
+> - Capture href for every link, src and alt for every image
+
+After all extraction agents complete, validate:
+- Each JSON file exists in `{{site-path}}/design/content/`
+- Each has a non-empty `sections` array
+- Section count roughly matches the number of major sections in the corresponding HTML
 
 ---
 
@@ -344,6 +491,7 @@ After mockup approval, every design decision is captured in files on disk:
 - `<site-path>/design/design-tokens.json`
 - `<site-path>/design/design-patterns.html`
 - Approved HTML mockups in `<site-path>/design/approved/`
+- Approved mockup screenshots in `<site-path>/design/verification/` (phase4-*.png — used for Phase 5 fidelity comparison)
 - `<site-path>/design/gallery.json`
 
 Collect these variables for the final handoff:
@@ -356,6 +504,7 @@ Collect these variables for the final handoff:
 | `approved-pages` | List of page slugs from Phase 4 (e.g., `homepage, about, contact, pricing`) |
 | `CLAUDE_PLUGIN_ROOT` | Plugin root path |
 | `user-image-filenames` | List of image files in `<site-path>/design/`, or "none". Identify which is the logo and briefly describe what each photo shows so the agent can place them in appropriate sections. |
+| `content-jsons` | Content JSON files in `<site-path>/design/content/` — character-accurate text content extracted from approved mockups |
 
 ---
 
@@ -390,13 +539,68 @@ Write(<site-path>/wp-content/themes/<theme-slug>/.warm, "")
 >
 > **Fidelity rule:** The approved mockups are the specification, not inspiration. The WordPress site must visually match them. Extract every CSS rule from the approved mockups' `<style>` blocks and from `design-patterns.html` into `style.css`, preserving all class names, values, and component structures. Do not regenerate CSS from tokens alone — the mockups contain custom component styles (card layouts, embellishments, section treatments) that go beyond what tokens capture.
 >
+> **Link color override caution:** When `theme.json` sets a global link color, it overrides custom link colors in the footer and other dark sections via WordPress specificity. The generated `style.css` must include scoped anchor resets for sections with custom link styling:
+> ```css
+> .site-footer a { color: inherit; text-decoration: none; }
+> .footer-nav-link, .footer-nav-link a { color: rgba(255,255,255,0.5) !important; }
+> ```
+> Any section with custom link colors needs explicit `!important` overrides to beat WordPress global link color specificity.
+>
+> **Background section animation fix:** Sections with `animate-on-scroll` that also have a background color (`has-background`) must NOT animate opacity on the section wrapper itself. Keep the section at `opacity: 1; transform: none` and animate children elements instead:
+> ```css
+> .wp-block-group.alignfull.animate-on-scroll.has-background,
+> .wp-block-cover.alignfull.animate-on-scroll {
+>   opacity: 1;
+>   transform: none;
+> }
+> /* Children start hidden */
+> .animate-on-scroll.has-background > .wp-block-group__inner-container > *,
+> .wp-block-cover.animate-on-scroll > .wp-block-cover__inner-container > * {
+>   opacity: 0;
+>   transform: translateY(30px);
+>   transition: opacity 0.6s ease, transform 0.6s ease;
+> }
+> /* Reveal children when section is visible */
+> .animate-on-scroll.has-background.is-visible > .wp-block-group__inner-container > *,
+> .animate-on-scroll.is-visible > .wp-block-cover__inner-container > * {
+>   opacity: 1;
+>   transform: translateY(0);
+> }
+> ```
+>
+> **Content source of truth:** For page text content, use the JSON files in `{{site-path}}/design/content/` as the authoritative source. Reproduce every heading, paragraph, and CTA character-for-character from these files. Do NOT extract or rewrite content from the raw HTML mockups.
+>
 > **Core blocks only:** You must do your best to faithfully reproduce the mockup designs using core blocks only. Do not resort to `<!-- wp:html -->` to achieve this, but get as close as possible using standard core blocks (`wp:group`, `wp:columns`, `wp:cover`, `wp:image`, `wp:paragraph`, `wp:heading`, `wp:buttons`, etc.) with additional CSS classes and custom properties. When a mockup pattern requires a specific internal structure (e.g., a horizontal card with a colored sidebar), use nested `wp:group` and `wp:columns` blocks with CSS classes that trigger the correct layout in `style.css`.
 >
 > **Step 3 — Build theme:** Generate all theme files to `<site-path>/wp-content/themes/<theme-slug>/`: theme.json (map design tokens), style.css (rich CSS with animations/hover/dark-mode), functions.php (Google Fonts via enqueue_block_assets, scroll observer), templates/ (templates must use `{"type":"default"}` layout on the main content wrapper so full-width blocks render edge-to-edge; only use `"constrained"` on inner groups where you need a max-width), parts/ (header.html, footer.html, page-title.html), patterns/ (if needed), assets/ (copy user images from `<site-path>/design/` to `assets/`), pages/ (WordPress block markup for each approved page, to be imported via WP-CLI). USER IMAGES: [paste `user-image-filenames`]. If user images exist: the logo MUST appear in header.html (use `<!-- wp:image -->` or `<!-- wp:site-logo -->`). Place other images in contextually appropriate page sections using `<!-- wp:image -->` blocks or as backgrounds in Cover/Group blocks — every image should feel intentionally placed and styled to match the design direction. Do not just copy them to assets and ignore them. If no user images, use CSS gradients and color blocks. Requirements: no emojis, no stock image URLs.
 >
 > **Step 4 — Fix block markup:** Run `node <CLAUDE_PLUGIN_ROOT>/scripts/block-fixer/cli.js <site-path>/wp-content/themes/<theme-slug>`
 >
-> **Step 5 — Activate and deploy:** (a) `studio wp --path <site-path> theme activate <theme-slug>`, (b) `studio wp --path <site-path> option update blogname "<site-name>"`, (c) for each page: `studio wp --path <site-path> post create --post_type=page --post_title="<title>" --post_name="<slug>" --post_content="$(cat <site-path>/wp-content/themes/<theme-slug>/pages/<page-slug>.html)" --post_status=publish`, (d) set front page: `studio wp --path <site-path> option update show_on_front page` then `studio wp --path <site-path> option update page_on_front <home-page-id>`, (e) `studio site status --path <site-path>` to get the site URL.
+> **Resolve slug conflicts:** Before creating pages, check for existing pages with conflicting slugs:
+> ```bash
+> studio wp --path {{site-path}} post list --post_type=page --post_status=any --fields=ID,post_name,post_status --format=csv
+> ```
+> For each approved page slug, if an existing page holds that slug, trash it:
+> ```bash
+> studio wp --path {{site-path}} post delete <ID> --force
+> ```
+> This ensures new pages get clean slugs (e.g., `/portfolio` not `/portfolio-2`).
+>
+> **Step 5 — Activate and deploy:** (a) `studio wp --path <site-path> theme activate <theme-slug>`, (a2) **Deactivate competing plugins:** After activating the new theme, deactivate known page-builder plugins that inject competing CSS/JS:
+> ```bash
+> studio wp --path {{site-path}} plugin deactivate fusion-builder fusion-core revslider js_composer jetpack jetpack-starter 2>/dev/null || true
+> ```
+> (b) `studio wp --path <site-path> option update blogname "<site-name>"`, (c) **Page creation (two-step to avoid shell escaping issues):** For each page:
+> 1. Create the page (empty):
+> ```bash
+> PAGE_ID=$(studio wp --path {{site-path}} post create --post_type=page --post_title="{{title}}" --post_name="{{slug}}" --post_status=publish --porcelain)
+> ```
+> 2. Update with content separately:
+> ```bash
+> CONTENT=$(cat {{site-path}}/wp-content/themes/{{theme-slug}}/pages/{{slug}}.html)
+> studio wp --path {{site-path}} post update $PAGE_ID --post_content="$CONTENT"
+> ```
+> Do NOT use `--post_content="$(cat file.html)"` in the create command — it breaks on special characters., (d) set front page: `studio wp --path <site-path> option update show_on_front page` then `studio wp --path <site-path> option update page_on_front <home-page-id>`, (e) `studio site status --path <site-path>` to get the site URL.
 >
 > **Step 5b — Verify:** For each page, compare the CSS classes used in the page block markup against what exists in `style.css`. If any class from the approved mockups is missing from `style.css`, add it. This is a safety net — every component class must have a corresponding CSS rule.
 >
@@ -406,7 +610,29 @@ Write(<site-path>/wp-content/themes/<theme-slug>/.warm, "")
 
 ### After Agent Completes
 
-Update `gallery.json` — set `phase` to `theme`, add theme slug to `themeSlugs`.
+**Phase 5 Fidelity Check** — the orchestrator screenshots the live WordPress site and compares against the approved Phase 4 mockup screenshots:
+
+1. For each page, screenshot the live WordPress site:
+   ```bash
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "<site-url>/<page-slug>/" "<site-path>/design/verification/phase5-[slug]-v1.png"
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot.mjs "<site-url>/<page-slug>/" "<site-path>/design/verification/phase5-[slug]-v1-tablet.png" 768
+   ```
+   For the homepage, use the site URL directly (no slug).
+
+2. Read each Phase 5 screenshot alongside its Phase 4 counterpart (`phase4-[slug]-v1.png`). This is a fidelity comparison — identify mismatches:
+   - Spacing differences (padding, margins, section gaps)
+   - Color mismatches (background colors, text colors, accent usage)
+   - Typography differences (font weight, size, letter-spacing)
+   - Layout alignment issues (grid proportions, element positioning)
+   - Missing hover states, animations, or embellishments
+
+3. If mismatches found: fix the theme files directly (update `style.css`, templates, patterns as needed), re-run block-fixer, and re-screenshot.
+
+4. Perform at least 2 comparison rounds. Stop when no visible differences remain or the user says done.
+
+5. Save final Phase 5 screenshots for the record.
+
+Then: Update `gallery.json` — set `phase` to `theme`, add theme slug to `themeSlugs`.
 
 "Your site is live — all [N] pages built in WordPress.
 
@@ -416,7 +642,15 @@ Update `gallery.json` — set `phase` to `theme`, add theme slug to `themeSlugs`
 | Theme | `<theme-name>` |
 | Site Path | `<site-path>` |
 
-Would you like to iterate, edit content, share a preview, or go back to mockups?"
+**Mobile preview:** To preview on your phone, run `ipconfig getifaddr en0` to get your local IP, then visit `http://<local-ip>:<port>` on your phone (same Wi-Fi network). The port is from the Studio site URL."
+
+After printing the table, run:
+```bash
+ipconfig getifaddr en0
+```
+If a local IP is returned, append: "Phone preview: `http://<local-ip>:<port>` (same Wi-Fi network)."
+
+Then ask: "Would you like to iterate, edit content, share a preview, or go back to mockups?"
 
 ### Iteration
 
